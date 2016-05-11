@@ -1,6 +1,9 @@
 import sys
+import os
 
-for path in ['/usr/local/google_appengine']:
+google_appengine_home = os.environ.get('GOOGLE_APPENGINE_HOME', '/usr/local/google_appengine')
+
+for path in [google_appengine_home]:
     if path not in sys.path:
         sys.path[0:0] = [path]
 

@@ -47,7 +47,6 @@ requirements = [
 ]
 
 test_requirements = [
-    'mock',
     'PyYAML==3.11'
 ]
 

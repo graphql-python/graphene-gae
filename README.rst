@@ -3,13 +3,13 @@ Graphene GAE
 ===============================
 
 .. image:: https://travis-ci.org/ekampf/graphene_gae.svg
-        :target: https://travis-ci.org/ekampf/graphene_gae
+        :target: https://travis-ci.org/ekampf/graphene-gae
 
-.. image:: https://coveralls.io/repos/ekampf/graphene_gae/badge.svg?branch=master&service=github
-        :target: https://coveralls.io/github/ekampf/graphene_gae?branch=master
+.. image:: https://coveralls.io/repos/ekampf/graphene-gae/badge.svg?branch=master&service=github
+        :target: https://coveralls.io/github/ekampf/graphene-gae?branch=master
 
-.. image:: https://img.shields.io/pypi/v/graphene_gae.svg
-        :target: https://pypi.python.org/pypi/graphene_gae
+.. image:: https://img.shields.io/pypi/v/graphene-gae.svg
+        :target: https://pypi.python.org/pypi/graphene-gae
 
 
 Graphene GAE Integration
