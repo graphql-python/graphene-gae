@@ -5,7 +5,7 @@ Graphene GAE
 .. image:: https://travis-ci.org/ekampf/graphene-gae.svg
         :target: https://travis-ci.org/ekampf/graphene-gae
 
-.. image:: https://coveralls.io/repos/ekampf/graphene-gae/badge.svg?branch=master&service=github
+.. image:: https://coveralls.io/repos/github/ekampf/graphene-gae/badge.svg?branch=master
         :target: https://coveralls.io/github/ekampf/graphene-gae?branch=master
 
 .. image:: https://img.shields.io/pypi/v/graphene-gae.svg
