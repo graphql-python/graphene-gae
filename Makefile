@@ -60,7 +60,6 @@ coverage:
 	PYTHONPATH=$PYTHONPATH:.venv:. ; . .venv/bin/activate && coverage run --source graphene_gae setup.py test
 	PYTHONPATH=$PYTHONPATH:.venv:. ; . .venv/bin/activate && coverage report -m
 	PYTHONPATH=$PYTHONPATH:.venv:. ; . .venv/bin/activate && coverage html
-	PYTHONPATH=$PYTHONPATH:.venv:. ; . .venv/bin/activate && open htmlcov/index.html
 
 docs:
 	rm -f docs/graphene_gae.rst
