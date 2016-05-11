@@ -1,0 +1,8 @@
+wheel==0.23.0
+tox
+coverage
+flake8
+Sphinx
+
+graphene
+PyYAML==3.11

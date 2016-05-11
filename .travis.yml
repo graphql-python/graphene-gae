@@ -1,0 +1,23 @@
+# Config file for automatic testing at travis-ci.org
+
+language: python
+
+python:
+  - "3.4"
+  - "2.7"
+  - "pypy"
+
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install:
+  - wget https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.23.zip -nv
+  - unzip -q google_appengine_1.9.23.zip
+  - export PYTHONPATH=${PYTHONPATH}:$(pwd)/google_appengine/
+  - export PATH=${PATH}:$(pwd)/google_appengine/
+  - CFLAGS="-O0" make deps
+  - pip install coveralls
+
+# command to run tests, e.g. python setup.py test
+script:
+  - CFLAGS="-O0" make coverage
+
+after_success: coveralls
