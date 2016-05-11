@@ -2,7 +2,7 @@ from tests.base_test import BaseTest
 
 import graphene
 
-from graphene_gae.types import NdbObjectType
+from graphene_gae import NdbObjectType
 from tests.models import Tag, Comment, Article
 
 __author__ = 'ekampf'

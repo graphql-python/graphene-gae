@@ -4,7 +4,7 @@ __author__ = 'ekampf'
 
 import graphene
 from graphene import relay
-from graphene_gae.types import NdbNode, NdbConnection
+from graphene_gae import NdbNode, NdbConnection
 
 from tests.models import Tag, Comment, Article
 
