@@ -9,6 +9,8 @@
 dist
 build
 eggs
+.eggs
+.cache
 parts
 bin
 var
