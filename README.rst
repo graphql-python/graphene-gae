@@ -2,7 +2,7 @@
 Graphene GAE
 ===============================
 
-.. image:: https://travis-ci.org/ekampf/graphene_gae.svg
+.. image:: https://travis-ci.org/ekampf/graphene-gae.svg
         :target: https://travis-ci.org/ekampf/graphene-gae
 
 .. image:: https://coveralls.io/repos/ekampf/graphene-gae/badge.svg?branch=master&service=github
