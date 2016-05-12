@@ -38,7 +38,7 @@ class QueryRoot(graphene.ObjectType):
 
 schema.query = QueryRoot
 
-class TestGrapheneNDBObjectTypes(BaseTest):
+class TestNDBTypes(BaseTest):
 
     def test_objecttype_instanciation(self):
         instance = Article(headline="test123")

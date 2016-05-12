@@ -4,7 +4,7 @@ __author__ = 'ekampf'
 
 import graphene
 from graphene import relay
-from graphene_gae import NdbNode, NdbConnection
+from graphene_gae import NdbNode, NdbConnection, NdbConnectionField
 
 from tests.models import Tag, Comment, Article
 
@@ -25,14 +25,17 @@ class ArticleType(NdbNode):
     class Meta:
         model = Article
 
-    comments = relay.ConnectionField(CommentType, connection_type=NdbConnection)
+    # comments = relay.ConnectionField(CommentType, connection_type=NdbConnection)
+    comments = NdbConnectionField(CommentType)
 
     def resolve_comments(self,  args, info):
         return Comment.query(ancestor=self.key)
 
 
+
 class QueryRoot(graphene.ObjectType):
-    articles = relay.ConnectionField(ArticleType, connection_type=NdbConnection)
+    # articles = relay.ConnectionField(ArticleType, connection_type=NdbConnection)
+    articles = NdbConnectionField(ArticleType)
 
     def resolve_articles(self, args, info):
         return Article.query()
@@ -41,7 +44,7 @@ class QueryRoot(graphene.ObjectType):
 schema.query = QueryRoot
 
 
-class TestGrapheneNDBRelay(BaseTest):
+class TestNDBTypesRelay(BaseTest):
 
     def test_connectionField(self):
         a1 = Article(headline="Test1", summary="1").put()

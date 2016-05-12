@@ -10,8 +10,13 @@ from .ndb.types import (
     NdbConnection
 )
 
+from .ndb.fields import (
+    NdbConnectionField
+)
+
 __all__ = [
     NdbObjectType,
     NdbNode,
-    NdbConnection
+    NdbConnection,
+    NdbConnectionField
 ]
