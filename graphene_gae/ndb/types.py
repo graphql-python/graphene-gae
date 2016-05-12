@@ -68,13 +68,16 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
     def construct_fields(cls):
         ndb_model = cls._meta.model
 
+        only_fields = cls._meta.only_fields
         already_created_fields = {field.attname for field in cls._meta.local_fields}
 
         for prop_name, prop in ndb_model._properties.iteritems():
             name = prop._code_name
+
+            is_not_in_only = only_fields and name not in only_fields
             is_already_created = name in already_created_fields
             is_excluded = name in cls._meta.exclude_fields or is_already_created
-            if is_excluded:
+            if is_not_in_only or is_excluded:
                 continue
 
             converted_property = convert_ndb_property(prop)
