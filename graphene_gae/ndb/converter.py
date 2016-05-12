@@ -9,7 +9,7 @@ __author__ = 'ekampf'
 def convert_ndb_scalar_property(graphene_type, ndb_prop):
     description = "%s %s property" % (ndb_prop._name, graphene_type)
     if ndb_prop._repeated:
-        return List(graphene_type._internal_type, description=description)
+        return graphene_type(description=description).List
 
     return graphene_type(description=description)
 
@@ -44,6 +44,7 @@ converters = {
     ndb.IntegerProperty: convert_ndb_int_property,
     ndb.FloatProperty: convert_ndb_float_property,
     ndb.JsonProperty: convert_ndb_json_property,
+    ndb.DateProperty: convert_ndb_datetime_property,
     ndb.DateTimeProperty: convert_ndb_datetime_property
 }
 
