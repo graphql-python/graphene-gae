@@ -87,7 +87,7 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
         cls = super(NdbObjectTypeMeta, cls).construct(*args, **kwargs)
         if not cls._meta.abstract:
             if not cls._meta.model:
-                raise Exception('Ndb ObjectType %s must have a model in the Meta class attr' % cls)
+                raise Exception('NdbObjectType %s must have a model in the Meta class attr' % cls)
 
             if not inspect.isclass(cls._meta.model) or not issubclass(cls._meta.model, ndb.Model):
                 raise Exception('Provided model in %s is not an Ndb model' % cls)
