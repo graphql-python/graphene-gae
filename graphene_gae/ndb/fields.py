@@ -1,15 +1,73 @@
 from google.appengine.ext import ndb
+from google.appengine.ext.db import BadArgumentError
+
+from graphene import relay
 from graphene.core.exceptions import SkipField
 from graphene.core.types.base import FieldType
-from graphene.utils import to_snake_case
-from graphene.relay import ConnectionField
-
-from .types import NdbConnection
 
 __author__ = 'ekampf'
 
 
-class NdbConnectionField(ConnectionField):
+def connection_from_ndb_query(query, args={}, connection_type=None,
+                              edge_type=None, pageinfo_type=None, **kwargs):
+
+
+    '''
+    A simple function that accepts an ndb Query and used ndb QueryIterator object(https://cloud.google.com/appengine/docs/python/ndb/queries#iterators)
+    to returns a connection object for use in GraphQL.
+    It uses array offsets as pagination,
+    so pagination will only work if the array is static.
+    '''
+    connection_type = connection_type or relay.Connection
+    edge_type = edge_type or relay.Edge
+    pageinfo_type = pageinfo_type or relay.PageInfo
+
+    full_args = dict(args, **kwargs)
+    first = full_args.get('first')
+    after = full_args.get('after')
+    has_previous_page = bool(after)
+    start_cursor = ndb.Cursor(urlsafe=after) if after else None
+
+    iter = query.iter(produce_cursors=True, start_cursor=start_cursor, batch_size=10)
+
+    page_size = first if first else 10
+    edges = []
+    while len(edges) < page_size:
+        try:
+            entity = iter.next()
+        except StopIteration:
+            break
+
+        edge = edge_type(node=entity, cursor=iter.cursor_after().urlsafe())
+        edges.append(edge)
+
+    try:
+        end_cursor = iter.cursor_after().urlsafe()
+    except BadArgumentError:
+        end_cursor = None
+
+    # Construct the connection
+    return connection_type(
+        edges=edges,
+        page_info=pageinfo_type(
+            start_cursor=start_cursor.urlsafe() if start_cursor else '',
+            end_cursor=end_cursor,
+            has_previous_page=has_previous_page,
+            has_next_page=iter.has_next()
+        )
+    )
+
+
+class NdbConnection(relay.types.Connection):
+    @classmethod
+    def from_list(cls, ndb_query, args, info):
+        connection = connection_from_ndb_query(ndb_query, args, connection_type=cls, edge_type=cls.edge_type, pageinfo_type=relay.PageInfo)
+        connection.set_connection_data(ndb_query)
+        return connection
+
+
+
+class NdbConnectionField(relay.ConnectionField):
 
     def __init__(self, *args, **kwargs):
         kwargs['connection_type'] = kwargs.pop('connection_type', NdbConnection)

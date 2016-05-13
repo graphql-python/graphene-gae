@@ -7,16 +7,18 @@ __version__ = '0.1.0'
 from .ndb.types import (
     NdbObjectType,
     NdbNode,
-    NdbConnection
 )
 
 from .ndb.fields import (
-    NdbConnectionField
+    NdbConnection,
+    NdbConnectionField,
+    NdbKeyField
 )
 
 __all__ = [
     NdbObjectType,
     NdbNode,
     NdbConnection,
-    NdbConnectionField
+    NdbConnectionField,
+    NdbKeyField
 ]
