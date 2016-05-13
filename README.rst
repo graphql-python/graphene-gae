@@ -119,8 +119,9 @@ After cloning this repo, ensure dependencies are installed by running:
     make deps
     make install
 
-Make sure tests are running:
+Make sure tests and lint are running:
 
 .. code:: sh
 
     make test
+    make lint
