@@ -44,7 +44,6 @@ class QueryRoot(graphene.ObjectType):
 
 
 schema.query = QueryRoot
-print(schema)
 
 
 class TestNDBTypesRelay(BaseTest):
