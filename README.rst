@@ -112,10 +112,11 @@ Limitations
 Contributing
 ------------
 
-After cloning this repo, ensure depedencies are installed by running:
+After cloning this repo, ensure dependencies are installed by running:
 
 .. code:: sh
 
+    make deps
     make install
 
 Make sure tests are running:
