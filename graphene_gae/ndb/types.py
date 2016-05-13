@@ -36,7 +36,7 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
             cls.add_to_class(conversion_result.name, conversion_result.field)
 
     def construct(cls, *args, **kwargs):
-        cls = super(NdbObjectTypeMeta, cls).construct(*args, **kwargs)
+        super(NdbObjectTypeMeta, cls).construct(*args, **kwargs)
         if not cls._meta.abstract:
             if not cls._meta.model:
                 raise Exception('NdbObjectType %s must have a model in the Meta class attr' % cls)
