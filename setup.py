@@ -4,6 +4,8 @@
 import codecs
 import os
 import re
+import sys
+import unittest
 from setuptools import setup
 
 root_dir = os.path.abspath(os.path.dirname(__file__))
@@ -50,6 +52,12 @@ test_requirements = [
     'PyYAML==3.11'
 ]
 
+def additional_tests():
+    setup_file = sys.modules['__main__'].__file__
+    setup_dir = os.path.abspath(os.path.dirname(setup_file))
+    print "*** Looking for tests in %s" % setup_dir
+    return unittest.defaultTestLoader.discover(setup_dir)
+
 setup(
     name='graphene_gae',
     version=get_version('graphene_gae'),
@@ -77,6 +85,6 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
     ],
-    test_suite='tests',
+    test_suite='setup.additional_tests',
     tests_require=test_requirements
 )

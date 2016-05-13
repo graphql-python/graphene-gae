@@ -87,7 +87,7 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
         cls = super(NdbObjectTypeMeta, cls).construct(*args, **kwargs)
         if not cls._meta.abstract:
             if not cls._meta.model:
-                raise Exception('Ndb ObjectType %s must have a model in the Meta class attr' % cls)
+                raise Exception('NdbObjectType %s must have a model in the Meta class attr' % cls)
 
             if not inspect.isclass(cls._meta.model) or not issubclass(cls._meta.model, ndb.Model):
                 raise Exception('Provided model in %s is not an Ndb model' % cls)
@@ -139,6 +139,10 @@ class NdbNodeInstance(relay.types.Node, InstanceObjectType):
 class NdbNode(six.with_metaclass(NdbNodeMeta, NdbNodeInstance)):
     class Meta:
         abstract = True
+
+    def to_global_id(self):
+        entity_id = self.key.id() if self.key else None
+        return self.global_id(entity_id)
 
     @classmethod
     def get_node(cls, id, info=None):
