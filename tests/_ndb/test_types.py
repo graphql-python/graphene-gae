@@ -39,23 +39,24 @@ class QueryRoot(graphene.ObjectType):
 
 schema.query = QueryRoot
 
+
 class TestNDBTypes(BaseTest):
 
-    def test_objecttype_instanciation(self):
+    def testNdbObjectType_instanciation(self):
         instance = Article(headline="test123")
         h = ArticleType(instance)
         self.assertEqual(h._root, instance)
         self.assertEqual(instance.key, h.key)
         self.assertEqual(instance.headline, h.headline)
 
-    def test_should_raise_if_no_model(self):
+    def testNdbObjectType_should_raise_if_no_model(self):
         with self.assertRaises(Exception) as context:
             class Character1(NdbObjectType):
                 pass
 
         assert 'model in the Meta' in str(context.exception.message)
 
-    def test_should_raise_if_model_is_invalid(self):
+    def testNdbObjectType_should_raise_if_model_is_invalid(self):
         with self.assertRaises(Exception) as context:
             class Character2(NdbObjectType):
                 class Meta:
