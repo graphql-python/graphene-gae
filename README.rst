@@ -12,6 +12,7 @@ Graphene GAE
         :target: https://pypi.python.org/pypi/graphene-gae
 
 
+
 A Google AppEngine integration library for `Graphene <http://graphene-python.org>`__
 
 * Free software: BSD license
@@ -98,9 +99,9 @@ Then you can simply query the schema:
     '''
     result = schema.execute(query)
 
-To learn more check out the following `examples <examples/>`__::
+To learn more check out the following `examples <examples/>`__:
 
-- `Starwars NDB example <examples/starwars>`__
+* `Starwars <examples/starwars>`__
 
 Limitations
 -----------
