@@ -45,7 +45,8 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'six>=1.10.0',
-    'graphene~=0.9.0'
+    'graphene~=0.9.0',
+    'inflect==0.2.5'
 ]
 
 test_requirements = [

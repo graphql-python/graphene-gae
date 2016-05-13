@@ -59,3 +59,31 @@ class TestNDBConverter(BaseTest):
 
     def testJsonProperty_shouldConvertToString(self):
         self.__assert_conversion(ndb.JsonProperty, JSONString)
+
+    def testKeyProperty_withSuffixRemoval_removesSuffix(self):
+        prop = ndb.KeyProperty()
+        prop._code_name = "user_key"
+
+        conversion = convert_ndb_property(prop)
+        self.assertEqual(conversion.name, "user")
+
+    def testKeyProperty_repeatedPlural_withSuffixRemoval_removesSuffixAndPluralName(self):
+        prop = ndb.KeyProperty()
+        prop._code_name = "user_keys"
+        conversion = convert_ndb_property(prop)
+        self.assertEqual(conversion.name, "users")
+
+        prop = ndb.KeyProperty()
+        prop._code_name = "tag_name_keys"
+        conversion = convert_ndb_property(prop)
+        self.assertEqual(conversion.name, "tag_names")
+
+        prop = ndb.KeyProperty()
+        prop._code_name = "person_keys"
+        conversion = convert_ndb_property(prop)
+        self.assertEqual(conversion.name, "people")
+
+        prop = ndb.KeyProperty()
+        prop._code_name = "universal_category_keys"
+        conversion = convert_ndb_property(prop)
+        self.assertEqual(conversion.name, "universal_categories")

@@ -1,9 +1,8 @@
-import six
 from collections import namedtuple
 
+import inflect
 from google.appengine.ext import ndb
 
-from graphene.core.types.definitions import List
 from graphene.core.types.scalars import String, Boolean, Int, Float
 from graphene.core.types.custom_scalars import JSONString, DateTime
 from graphene_gae.ndb.fields import NdbKeyField
@@ -12,6 +11,7 @@ __author__ = 'ekampf'
 
 ConversionResult = namedtuple('ConversionResult', ['name', 'field'])
 
+p = inflect.engine()
 
 def convert_ndb_scalar_property(graphene_type, ndb_prop):
     description = "%s %s property" % (ndb_prop._name, graphene_type)
@@ -55,6 +55,7 @@ def convert_ndb_key_propety(ndb_key_prop, meta):
 
         if name.endswith('_keys'):
             name = name[:-5]
+            name = p.plural(name)
 
     field = NdbKeyField(ndb_key_prop._code_name, ndb_key_prop._kind)
     if ndb_key_prop._repeated:
