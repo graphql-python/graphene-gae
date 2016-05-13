@@ -12,13 +12,113 @@ Graphene GAE
         :target: https://pypi.python.org/pypi/graphene-gae
 
 
-Graphene GAE Integration
+A Google AppEngine integration library for `Graphene <http://graphene-python.org>`__
 
 * Free software: BSD license
 * Documentation: https://graphene_gae.readthedocs.org.
 
-Features
+Installation
+------------
+
+To install Graphene-GAE on your AppEngine project, go to your
+project folder and runthis command in your shell:
+
+.. code:: bash
+
+    pip install graphene-gae -t ./libs
+
+This will install the library and its dependencies to the `libs` folder
+under your projects root - so the dependencies get uploaded withyour GAE
+project when you publish your app.
+
+Make sure the `libs` folder is in your python path by adding the following
+to your `appengine_config.py`:
+
+.. code:: python
+
+    import sys
+
+    for path in ['libs']:
+        if path not in sys.path:
+            sys.path[0:0] = [path]
+
+
+Examples
 --------
 
-* TODO
+Here's a simple GAE model:
 
+.. code:: python
+
+    class Article(ndb.Model):
+        headline = ndb.StringProperty()
+        summary = ndb.TextProperty()
+        text = ndb.TextProperty()
+
+        author_key = ndb.KeyProperty(kind='Author')
+
+        created_at = ndb.DateTimeProperty(auto_now_add=True)
+        updated_at = ndb.DateTimeProperty(auto_now=True)
+
+To create a GraphQL schema for it you simply have to write the following:
+
+.. code:: python
+
+    import graphene
+    from graphene_gae import NdbObjectType
+
+    schema = graphene.Schema()
+
+    @schema.register
+    class ArticleType(NdbObjectType):
+        class Meta:
+            model = Article
+
+    class Query(graphene.ObjectType):
+        articles = graphene.List(ArticleType)
+
+        @graphene.resolve_only_args
+        def resolve_articles(self):
+            return Article.query()
+
+    schema.query = QueryRoot
+
+Then you can simply query the schema:
+
+.. code::python
+
+    query = '''
+        query GetArticles {
+          articles {
+            headline,
+            summary,
+            created_at
+          }
+        }
+    '''
+    result = schema.execute(query)
+
+To learn more check out the following `examples <examples/>`__::
+
+- `Starwars NDB example <examples/starwars>`__
+
+Limitations
+-----------
+
+- Does not currently support complex NDB keys (keys composed of one or more ancestors) - WIP
+
+
+Contributing
+------------
+
+After cloning this repo, ensure depedencies are installed by running:
+
+.. code:: sh
+
+    make install
+
+Make sure tests are running:
+
+.. code:: sh
+
+    make test
