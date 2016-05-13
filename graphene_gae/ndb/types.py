@@ -42,7 +42,7 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
                 raise Exception('NdbObjectType %s must have a model in the Meta class attr' % cls)
 
             if not inspect.isclass(cls._meta.model) or not issubclass(cls._meta.model, ndb.Model):
-                raise Exception('Provided model in %s is not an Ndb model' % cls)
+                raise Exception('Provided model in %s is not an NDB model' % cls)
 
             cls.construct_fields()
         return cls

@@ -48,6 +48,21 @@ class TestNDBTypes(BaseTest):
         self.assertEqual(instance.key, h.key)
         self.assertEqual(instance.headline, h.headline)
 
+    def test_should_raise_if_no_model(self):
+        with self.assertRaises(Exception) as context:
+            class Character1(NdbObjectType):
+                pass
+
+        assert 'model in the Meta' in str(context.exception.message)
+
+    def test_should_raise_if_model_is_invalid(self):
+        with self.assertRaises(Exception) as context:
+            class Character2(NdbObjectType):
+                class Meta:
+                    model = 1
+
+        assert 'not an NDB model' in str(context.exception.message)
+
     def testQuery_excludedField(self):
         Article(headline="h1", summary="s1").put()
 
@@ -112,7 +127,7 @@ class TestNDBTypes(BaseTest):
         self.assertIsNotNone(result.errors)
         self.assertTrue('Cannot query field "summary"' in result.errors[0].message)
 
-    def test_query_list(self):
+    def testQuery_list(self):
         Article(headline="Test1", summary="1").put()
         Article(headline="Test2", summary="2").put()
         Article(headline="Test3", summary="3").put()
@@ -132,7 +147,7 @@ class TestNDBTypes(BaseTest):
             self.assertLength(article.keys(), 1)
             self.assertEqual(article.keys()[0], 'headline')
 
-    def test_query_repeatedProperty(self):
+    def testQuery_repeatedProperty(self):
         keywords = ["a", "b", "c"]
         a = Article(headline="Test1", keywords=keywords).put()
 
