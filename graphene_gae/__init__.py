@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 
-__author__ = 'Eran Kampf'
-__version__ = '0.1.0'
-
-
 from .ndb.types import (
     NdbObjectType,
     NdbNode,
@@ -14,6 +10,9 @@ from .ndb.fields import (
     NdbConnectionField,
     NdbKeyField
 )
+
+__author__ = 'Eran Kampf'
+__version__ = '0.1.0'
 
 __all__ = [
     NdbObjectType,

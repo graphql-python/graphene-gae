@@ -13,6 +13,7 @@ __author__ = 'ekampf'
 class SomeWeirdUnknownProperty(ndb.Property):
     pass
 
+
 class TestNDBConverter(BaseTest):
     def __assert_conversion(self, ndb_property_type, expected_graphene_type, *args, **kwargs):
         ndb_property = ndb_property_type(*args, **kwargs)

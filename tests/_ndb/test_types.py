@@ -152,7 +152,6 @@ class TestNDBTypes(BaseTest):
         keywords = ["a", "b", "c"]
         a = Article(headline="Test1", keywords=keywords).put()
 
-
         result = schema.execute("""
             query Articles {
                 articles {
@@ -170,5 +169,3 @@ class TestNDBTypes(BaseTest):
         self.assertEqual(article["createdAt"], str(a.get().created_at.isoformat()))
         self.assertEqual(article["headline"], "Test1")
         self.assertListEqual(article["keywords"], keywords)
-
-

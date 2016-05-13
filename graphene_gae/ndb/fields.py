@@ -10,8 +10,6 @@ __author__ = 'ekampf'
 
 def connection_from_ndb_query(query, args={}, connection_type=None,
                               edge_type=None, pageinfo_type=None, **kwargs):
-
-
     '''
     A simple function that accepts an ndb Query and used ndb QueryIterator object(https://cloud.google.com/appengine/docs/python/ndb/queries#iterators)
     to returns a connection object for use in GraphQL.
@@ -66,9 +64,7 @@ class NdbConnection(relay.types.Connection):
         return connection
 
 
-
 class NdbConnectionField(relay.ConnectionField):
-
     def __init__(self, *args, **kwargs):
         kwargs['connection_type'] = kwargs.pop('connection_type', NdbConnection)
         super(NdbConnectionField, self).__init__(*args, **kwargs)
@@ -147,14 +143,3 @@ class NdbKeyField(FieldType):
         value = key.get()
         setattr(entity, cache_name, value)
         return value
-
-
-
-
-
-
-
-
-
-
-

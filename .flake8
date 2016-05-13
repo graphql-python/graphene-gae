@@ -1,0 +1,4 @@
+[flake8]
+ignore=
+max-line-length=160
+exclude=tests/base_test.py

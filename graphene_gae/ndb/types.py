@@ -5,7 +5,6 @@ from graphene import relay
 from graphene.core.classtypes.objecttype import ObjectType, ObjectTypeMeta
 
 from google.appengine.ext import ndb
-from google.appengine.ext.db import BadArgumentError
 
 from .options import NdbOptions
 
@@ -76,9 +75,6 @@ class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, InstanceObjectType)):
         abstract = True
 
 
-###################  Relay stuff
-
-
 class NdbNodeMeta(NdbObjectTypeMeta, relay.types.NodeMeta):
     pass
 
@@ -103,4 +99,3 @@ class NdbNode(six.with_metaclass(NdbNodeMeta, NdbNodeInstance)):
             return cls(instance)
         except cls._meta.model.DoesNotExist:
             return None
-

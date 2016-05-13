@@ -13,6 +13,7 @@ ConversionResult = namedtuple('ConversionResult', ['name', 'field'])
 
 p = inflect.engine()
 
+
 def convert_ndb_scalar_property(graphene_type, ndb_prop):
     description = "%s %s property" % (ndb_prop._name, graphene_type)
     if ndb_prop._repeated:
@@ -75,6 +76,7 @@ converters = {
     ndb.DateTimeProperty: convert_ndb_datetime_property,
     ndb.KeyProperty: convert_ndb_key_propety
 }
+
 
 def convert_ndb_property(prop, meta=None):
     converter_func = converters.get(type(prop))

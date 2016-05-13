@@ -24,7 +24,6 @@ class BaseTest(unittest.TestCase):
         super(BaseTest, self).__init__(method_name)
         self.datastore_probability = 1
 
-
     def setUp(self):
         super(BaseTest, self).setUp()
 
