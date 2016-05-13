@@ -140,6 +140,10 @@ class NdbNode(six.with_metaclass(NdbNodeMeta, NdbNodeInstance)):
     class Meta:
         abstract = True
 
+    def to_global_id(self):
+        entity_id = self.key.id() if self.key else None
+        return self.global_id(entity_id)
+
     @classmethod
     def get_node(cls, id, info=None):
         try:
