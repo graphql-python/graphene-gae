@@ -3,12 +3,16 @@ from tests.base_test import BaseTest
 __author__ = 'ekampf'
 
 import graphene
-from graphene import relay
-from graphene_gae import NdbNode, NdbConnection, NdbConnectionField
+from graphene_gae import NdbNode, NdbConnectionField
 
-from tests.models import Tag, Comment, Article
+from tests.models import Tag, Comment, Article, Author
 
 schema = graphene.Schema()
+
+@schema.register
+class AuthorType(NdbNode):
+    class Meta:
+        model = Author
 
 @schema.register
 class TagType(NdbNode):
@@ -25,12 +29,10 @@ class ArticleType(NdbNode):
     class Meta:
         model = Article
 
-    # comments = relay.ConnectionField(CommentType, connection_type=NdbConnection)
     comments = NdbConnectionField(CommentType)
 
     def resolve_comments(self,  args, info):
         return Comment.query(ancestor=self.key)
-
 
 
 class QueryRoot(graphene.ObjectType):
@@ -42,9 +44,57 @@ class QueryRoot(graphene.ObjectType):
 
 
 schema.query = QueryRoot
+print(schema)
 
 
 class TestNDBTypesRelay(BaseTest):
+
+    def test_keyProperty(self):
+        Article(
+            headline="Test1",
+            summary="1",
+            author_key=Author(name="John Dow", email="john@dow.com").put(),
+            tags=[
+                Tag(name="tag1").put(),
+                Tag(name="tag2").put(),
+                Tag(name="tag3").put(),
+            ]
+        ).put()
+
+        result = schema.execute("""
+            query Articles {
+                articles(first:2) {
+                    edges {
+                        cursor,
+                        node {
+                            headline,
+                            summary,
+                            author { name },
+                            tags { name }
+                        }
+                    }
+
+                }
+            }
+            """)
+
+        self.assertEmpty(result.errors, msg=str(result.errors))
+
+        articles = result.data.get('articles', {}).get('edges', [])
+        self.assertLength(articles, 1)
+
+        article = articles[0]['node']
+        self.assertEqual(article['headline'], 'Test1')
+        self.assertEqual(article['summary'], '1')
+
+        author = article['author']
+        self.assertLength(author.keys(), 1)
+        self.assertEqual(author['name'], 'John Dow')
+
+        tags = article['tags']
+        tag_names = [t['name'] for t in tags]
+        self.assertListEqual(tag_names, ['tag1', 'tag2', 'tag3'])
+
 
     def test_connectionField(self):
         a1 = Article(headline="Test1", summary="1").put()

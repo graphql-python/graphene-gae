@@ -24,9 +24,8 @@ class Article(ndb.Model):
     body = ndb.TextProperty()
     keywords = ndb.StringProperty(repeated=True)
 
-    author_key = ndb.KeyProperty('Author')
-
-    tags = ndb.KeyProperty('Tag', repeated=True)
+    author_key = ndb.KeyProperty(kind='Author')
+    tags = ndb.KeyProperty(Tag, repeated=True)
 
     created_at = ndb.DateTimeProperty(auto_now_add=True)
     updated_at = ndb.DateTimeProperty(auto_now=True)

@@ -7,8 +7,6 @@ from graphene.core.classtypes.objecttype import ObjectType, ObjectTypeMeta
 from google.appengine.ext import ndb
 from google.appengine.ext.db import BadArgumentError
 
-from .converter import convert_ndb_property
-
 from .options import NdbOptions
 
 __author__ = 'ekampf'
@@ -66,6 +64,8 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
     options_class = NdbOptions
 
     def construct_fields(cls):
+        from .converter import convert_ndb_property
+
         ndb_model = cls._meta.model
 
         only_fields = cls._meta.only_fields
@@ -80,9 +80,8 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
             if is_not_in_only or is_excluded:
                 continue
 
-            converted_property = convert_ndb_property(prop)
-            if converted_property:
-                cls.add_to_class(prop._code_name, converted_property)
+            conversion_result = convert_ndb_property(prop, cls._meta)
+            cls.add_to_class(conversion_result.name, conversion_result.field)
 
     def construct(cls, *args, **kwargs):
         cls = super(NdbObjectTypeMeta, cls).construct(*args, **kwargs)

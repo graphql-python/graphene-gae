@@ -61,8 +61,8 @@ class BaseTest(unittest.TestCase):
         return self.taskqueue_stub.get_filtered_tasks(url=url, name=name, queue_names=queue_names)
 
     # region Extra Assertions
-    def assertEmpty(self, l):
-        self.assertEqual(0, len(list(l)))
+    def assertEmpty(self, l, msg=None):
+        self.assertEqual(0, len(list(l)), msg=msg)
 
     def assertLength(self, l, expectation, msg=None):
         self.assertEqual(len(l), expectation, msg)

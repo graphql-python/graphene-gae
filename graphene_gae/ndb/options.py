@@ -4,7 +4,20 @@ from graphene.relay.utils import is_node
 
 
 class NdbOptions(ObjectTypeOptions):
-    VALID_ATTRS = ('model', 'only_fields', 'exclude_fields')
+    """
+    Defines how Graphene will convert the NDB model.
+    Supports the following properties:
+
+    * model - which model to convert
+    * only_fields - only convert the following property names
+    * exclude_fields - exclude specified properties from conversion
+    * remove_key_property_suffix - remove '_key' suffix from KeyProperty
+        * user_key => user
+        * user_keys => users
+
+    """
+
+    VALID_ATTRS = ('model', 'only_fields', 'exclude_fields', 'remove_key_property_suffix')
 
     def __init__(self, *args, **kwargs):
         super(NdbOptions, self).__init__(*args, **kwargs)
@@ -12,6 +25,7 @@ class NdbOptions(ObjectTypeOptions):
         self.valid_attrs += self.VALID_ATTRS
         self.only_fields = None
         self.exclude_fields = []
+        self.remove_key_property_suffix = True
 
     def contribute_to_class(self, cls, name):
         super(NdbOptions, self).contribute_to_class(cls, name)

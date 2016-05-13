@@ -26,6 +26,7 @@ class CommentType(NdbObjectType):
 class ArticleType(NdbObjectType):
     class Meta:
         model = Article
+        exclude_fields = ['to_be_excluded']
 
 
 class QueryRoot(graphene.ObjectType):
@@ -43,8 +44,73 @@ class TestNDBTypes(BaseTest):
     def test_objecttype_instanciation(self):
         instance = Article(headline="test123")
         h = ArticleType(instance)
+        self.assertEqual(h._root, instance)
         self.assertEqual(instance.key, h.key)
         self.assertEqual(instance.headline, h.headline)
+
+    def testQuery_excludedField(self):
+        Article(headline="h1", summary="s1").put()
+
+        class ArticleType(NdbObjectType):
+            class Meta:
+                model = Article
+                exclude_fields = ['summary']
+
+        class QueryType(graphene.ObjectType):
+            articles = graphene.List(ArticleType)
+
+            @graphene.resolve_only_args
+            def resolve_articles(self):
+                return Article.query()
+
+        schema = graphene.Schema(query=QueryType)
+        query = '''
+            query ArticlesQuery {
+              articles { headline, summary }
+            }
+        '''
+
+        result = schema.execute(query)
+
+        self.assertIsNotNone(result.errors)
+        self.assertTrue('Cannot query field "summary"' in result.errors[0].message)
+
+    def testQuery_onlyFields(self):
+        Article(headline="h1", summary="s1").put()
+
+        class ArticleType(NdbObjectType):
+            class Meta:
+                model = Article
+                only_fields = ['headline']
+
+        class QueryType(graphene.ObjectType):
+            articles = graphene.List(ArticleType)
+
+            @graphene.resolve_only_args
+            def resolve_articles(self):
+                return Article.query()
+
+        schema = graphene.Schema(query=QueryType)
+        query = '''
+                    query ArticlesQuery {
+                      articles { headline }
+                    }
+                '''
+
+        result = schema.execute(query)
+
+        self.assertIsNotNone(result.data)
+        self.assertEqual(result.data['articles'][0]['headline'], 'h1')
+
+        query = '''
+                    query ArticlesQuery {
+                      articles { headline, summary }
+                    }
+                '''
+        result = schema.execute(query)
+
+        self.assertIsNotNone(result.errors)
+        self.assertTrue('Cannot query field "summary"' in result.errors[0].message)
 
     def test_query_list(self):
         Article(headline="Test1", summary="1").put()
