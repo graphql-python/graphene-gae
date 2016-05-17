@@ -20,5 +20,6 @@ script:
   - make deps
   - make test
   - make coverage
+  - make lint
 
 after_success: coveralls
