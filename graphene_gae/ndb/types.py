@@ -89,13 +89,14 @@ class NdbNode(six.with_metaclass(NdbNodeMeta, NdbNodeInstance)):
         abstract = True
 
     def to_global_id(self):
-        entity_id = self.key.id() if self.key else None
+        entity_id = self.key.urlsafe() if self.key else None
         return self.global_id(entity_id)
 
     @classmethod
     def get_node(cls, id, info=None):
         try:
-            instance = cls._meta.model.get_by_id(id)
+            key = ndb.Key(urlsafe=id)
+            instance = key.get()
             return cls(instance)
         except cls._meta.model.DoesNotExist:
             return None
