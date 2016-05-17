@@ -103,12 +103,6 @@ To learn more check out the following `examples <examples/>`__:
 
 * `Starwars <examples/starwars>`__
 
-Limitations
------------
-
-- Does not currently support complex NDB keys (keys composed of one or more ancestors) - WIP
-
-
 Contributing
 ------------
 
