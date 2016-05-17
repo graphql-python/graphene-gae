@@ -1,5 +1,9 @@
 from tests.base_test import BaseTest
 
+from google.appengine.ext import ndb
+
+from graphql_relay import to_global_id
+
 from examples.starwars.data import initialize
 from examples.starwars.schema import schema
 
@@ -22,7 +26,7 @@ class TestStarWarsObjectIdentification(BaseTest):
           '''
         expected = {
             'rebels': {
-                'id': 'RmFjdGlvbjpyZWJlbHM=',
+                'id': to_global_id('Faction', ndb.Key('Faction', 'rebels').urlsafe()),
                 'name': 'Alliance to Restore the Republic'
             }
         }
@@ -31,19 +35,21 @@ class TestStarWarsObjectIdentification(BaseTest):
         self.assertDictEqual(result.data, expected)
 
     def test_correctly_refetches_rebels(self):
+        rebels_key = to_global_id('Faction', ndb.Key('Faction', 'rebels').urlsafe())
         query = '''
             query RebelsRefetchQuery {
-              node(id: "RmFjdGlvbjpyZWJlbHM=") {
+              node(id: "%s") {
                 id
                 ... on Faction {
                   name
                 }
               }
             }
-          '''
+          ''' % rebels_key
+
         expected = {
             'node': {
-                'id': 'RmFjdGlvbjpyZWJlbHM=',
+                'id': rebels_key,
                 'name': 'Alliance to Restore the Republic'
             }
         }
@@ -52,6 +58,7 @@ class TestStarWarsObjectIdentification(BaseTest):
         self.assertDictEqual(result.data, expected)
 
     def test_correctly_fetches_id_name_empire(self):
+        empire_key = to_global_id('Faction', ndb.Key('Faction', 'empire').urlsafe())
         query = '''
           query EmpireQuery {
             empire {
@@ -62,7 +69,7 @@ class TestStarWarsObjectIdentification(BaseTest):
         '''
         expected = {
             'empire': {
-                'id': 'RmFjdGlvbjplbXBpcmU=',
+                'id': empire_key,
                 'name': 'Galactic Empire'
             }
         }
@@ -71,19 +78,20 @@ class TestStarWarsObjectIdentification(BaseTest):
         self.assertDictEqual(result.data, expected)
 
     def test_correctly_refetches_id_name_empire(self):
+        empire_key = to_global_id('Faction', ndb.Key('Faction', 'empire').urlsafe())
         query = '''
             query EmpireRefetchQuery {
-              node(id: "RmFjdGlvbjplbXBpcmU=") {
+              node(id: "%s") {
                 id
                 ... on Faction {
                   name
                 }
               }
             }
-          '''
+          ''' % empire_key
         expected = {
             'node': {
-                'id': 'RmFjdGlvbjplbXBpcmU=',
+                'id': empire_key,
                 'name': 'Galactic Empire'
             }
         }
