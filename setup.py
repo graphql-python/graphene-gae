@@ -66,7 +66,7 @@ setup(
     long_description=readme + '\n\n' + history,
     author="Eran Kampf",
     author_email='eran@ekampf.com',
-    url='https://github.com/ekampf/graphene_gae',
+    url='https://github.com/graphql-python/graphene_gae',
     packages=[
         'graphene_gae',
     ],
