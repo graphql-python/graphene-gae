@@ -50,7 +50,8 @@ requirements = [
 ]
 
 test_requirements = [
-    'PyYAML==3.11'
+    'PyYAML==3.11',
+    'webapp2'
 ]
 
 def additional_tests():
