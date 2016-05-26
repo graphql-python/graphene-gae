@@ -93,9 +93,9 @@ class NdbNode(six.with_metaclass(NdbNodeMeta, NdbNodeInstance)):
         return self.global_id(entity_id)
 
     @classmethod
-    def get_node(cls, id, info=None):
+    def get_node(cls, urlsafe_key, info=None):
         try:
-            key = ndb.Key(urlsafe=id)
+            key = ndb.Key(urlsafe=urlsafe_key)
             instance = key.get()
             if not instance:
                 return None
