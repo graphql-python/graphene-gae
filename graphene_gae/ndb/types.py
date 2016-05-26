@@ -97,6 +97,9 @@ class NdbNode(six.with_metaclass(NdbNodeMeta, NdbNodeInstance)):
         try:
             key = ndb.Key(urlsafe=id)
             instance = key.get()
+            if not instance:
+                return None
+
             return cls(instance)
-        except cls._meta.model.DoesNotExist:
+        except:
             return None
