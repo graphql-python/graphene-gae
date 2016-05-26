@@ -22,4 +22,3 @@ class TestGraphQLHandler(BaseTest):
         response = request.get_response(graphql_application)
 
         self.assertEqual(response.status_int, 400)
-
