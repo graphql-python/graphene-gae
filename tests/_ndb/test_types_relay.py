@@ -202,3 +202,6 @@ class TestNDBTypesRelay(BaseTest):
 
         comments = article['comments']['edges']
         self.assertEmpty(comments)
+
+    def test_connectionField_model(self):
+        self.assertEqual(NdbConnectionField(CommentType).model, Comment)
