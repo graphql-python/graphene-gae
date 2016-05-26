@@ -63,6 +63,17 @@ class TestNDBTypesRelay(BaseTest):
         result = ArticleType.get_node(article_key.urlsafe())
         self.assertIsNone(result)
 
+    def testNdbNode_getNode_validID_entityDoes_shouldReturnEntity(self):
+        article_key = Article(
+            headline="TestGetNode",
+            summary="1",
+            author_key=Author(name="John Dow", email="john@dow.com").put(),
+        ).put()
+
+        result = ArticleType.get_node(article_key.urlsafe())
+        self.assertIsNotNone(result)
+        self.assertEqual(result.instance, article_key.get())
+
     def test_keyProperty(self):
         Article(
             headline="Test1",
