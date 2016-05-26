@@ -1,5 +1,7 @@
 from tests.base_test import BaseTest
 
+from google.appengine.ext import ndb
+
 import graphene
 from graphene_gae import NdbNode, NdbConnectionField
 
@@ -51,6 +53,15 @@ schema.query = QueryRoot
 
 
 class TestNDBTypesRelay(BaseTest):
+
+    def testNdbNode_getNode_invalidId_shouldReturnNone(self):
+        result = ArticleType.get_node("I'm not a valid NDB encoded key")
+        self.assertIsNone(result)
+
+    def testNdbNode_getNode_validID_entityDoesntExist_shouldReturnNone(self):
+        article_key = ndb.Key('Article', 'invalid_id_thats_not_in_db')
+        result = ArticleType.get_node(article_key.urlsafe())
+        self.assertIsNone(result)
 
     def test_keyProperty(self):
         Article(
