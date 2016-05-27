@@ -53,14 +53,13 @@ test_requirements = [
     'PyYAML==3.11'
 ]
 
+
 def additional_tests():
     setup_file = sys.modules['__main__'].__file__
     setup_dir = os.path.abspath(os.path.dirname(setup_file))
     print "*** Looking for tests in %s" % setup_dir
     return unittest.defaultTestLoader.discover(setup_dir)
 
-packages = find_packages(exclude=['tests*', 'examples*'])
-print(packages)
 
 setup(
     name='graphene_gae',
@@ -70,7 +69,7 @@ setup(
     author="Eran Kampf",
     author_email='eran@ekampf.com',
     url='https://github.com/graphql-python/graphene_gae',
-    packages=packages,
+    packages=find_packages(exclude=['tests*', 'examples*']),
     include_package_data=True,
     install_requires=requirements,
     license="BSD",
