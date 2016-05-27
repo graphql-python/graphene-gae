@@ -59,7 +59,7 @@ test_requirements = [
 def additional_tests():
     setup_file = sys.modules['__main__'].__file__
     setup_dir = os.path.abspath(os.path.dirname(setup_file))
-    print "*** Looking for tests in %s" % setup_dir
+    print("*** Looking for tests in %s" % setup_dir)
     return unittest.defaultTestLoader.discover(setup_dir)
 
 packages = find_packages(exclude=['tests*', 'examples*'])

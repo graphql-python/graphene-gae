@@ -1,6 +1,7 @@
 import logging
 import json
 import webapp2
+import six
 
 from graphql import GraphQLError, format_error as format_graphql_error
 
@@ -52,7 +53,7 @@ class GraphQLHandler(webapp2.RequestHandler):
 
         operation_name = self.request.json_body.get('operation_name')
         variables = self.request.json_body.get('variables')
-        if variables and isinstance(variables, basestring):
+        if variables and isinstance(variables, six.text_type):
             try:
                 variables = json.loads(variables)
             except:
