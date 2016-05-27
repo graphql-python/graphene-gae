@@ -61,7 +61,7 @@ class TestGraphQLHandler(BaseTest):
                 query helloYou { greet(who: "You"), ...shared }
                 query helloWorld { greet(who: "World"), ...shared }
                 query helloDolly { greet(who: "Dolly"), ...shared }
-                fragment shared on Query {
+                fragment shared on QueryRootType {
                     shared: greet(who: "Everyone")
                 }
             ''',
@@ -111,7 +111,7 @@ class TestGraphQLHandler(BaseTest):
             query='''
                 query helloWorld { greet(who: "World"), ...shared }
                 query helloDolly { greet(who: "Dolly"), ...shared }
-                fragment shared on Query {
+                fragment shared on QueryRootType {
                     shared: greet(who: "Everyone")
                 }
             '''

@@ -15,15 +15,7 @@ class GraphQLHandler(webapp2.RequestHandler):
         if not schema:
             webapp2.abort(500, detail='GraphQL Schema is missing.')
 
-        query = None if not self.request.body else self.request.json_body.get('query')
-        if not query:
-            return self.failed_response(400, dict(errors=[dict(message='Query is empty.')]), pretty=pretty)
-
-        operation_name = self.request.json_body.get('operation_name')
-        variables = self.request.json_body.get('variables')
-
-        logging.debug("Executing query: %s", query)
-
+        query, operation_name, variables = self._get_grapl_params()
         result = schema.execute(query,
                                 operation_name=operation_name,
                                 variable_values=variables,
@@ -39,6 +31,32 @@ class GraphQLHandler(webapp2.RequestHandler):
 
         response['data'] = result.data
         return self.successful_response(response)
+
+    def handle_exception(self, exception, debug):
+        logging.exception(exception)
+
+        status_code = 500
+        if isinstance(exception, webapp2.HTTPException):
+            status_code = exception.code
+
+        self.failed_response(status_code, {
+            'errors': [self.__format_error(exception)]
+        })
+
+    def _get_grapl_params(self):
+        query = None if not self.request.body else self.request.json_body.get('query')
+        if not query:
+            webapp2.abort(400, "Query is empty.")
+
+        operation_name = self.request.json_body.get('operation_name')
+        variables = self.request.json_body.get('variables')
+        if variables and isinstance(variables, basestring):
+            try:
+                variables = json.loads(variables)
+            except:
+                raise webapp2.abort(400, 'Variables are invalid JSON.')
+
+        return query, operation_name, variables
 
     def _get_root_value(self):
         return None
