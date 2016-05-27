@@ -3,6 +3,11 @@
 History
 -------
 
+0.1.3 (2016-05-27)
+---------------------
+* Added `graphene_gae.webapp2.GraphQLHandler` - a basic HTTP Handler to process GraphQL requests
+
+
 0.1.1 (2016-05-25)
 ---------------------
 
