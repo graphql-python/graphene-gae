@@ -1,4 +1,4 @@
 [flake8]
-ignore=
+ignore=W391
 max-line-length=160
 exclude=tests/base_test.py

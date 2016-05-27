@@ -50,14 +50,17 @@ requirements = [
 ]
 
 test_requirements = [
-    'PyYAML==3.11'
+    'PyYAML==3.11',
+    'webapp2==2.5.2',
+    'webob==1.2.3',
+    'WebTest==2.0.11'
 ]
 
 
 def additional_tests():
     setup_file = sys.modules['__main__'].__file__
     setup_dir = os.path.abspath(os.path.dirname(setup_file))
-    print "*** Looking for tests in %s" % setup_dir
+    print("*** Looking for tests in %s" % setup_dir)
     return unittest.defaultTestLoader.discover(setup_dir)
 
 

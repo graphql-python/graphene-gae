@@ -38,7 +38,7 @@ class ArticleType(NdbNode):
 
     comments = NdbConnectionField(CommentType)
 
-    def resolve_comments(self,  args, info):
+    def resolve_comments(self, args, info):
         return Comment.query(ancestor=self.key)
 
 
