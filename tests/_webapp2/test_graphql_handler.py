@@ -4,7 +4,6 @@ import json
 import webtest
 import graphene
 
-from graphql import GraphQLArgument
 from graphene_gae.webapp2 import graphql_application
 
 __author__ = 'ekampf'
@@ -85,7 +84,7 @@ class TestGraphQLHandler(BaseTest):
 
         response_dict = json.loads(response.body)
         self.assertDictEqual(
-            response_dict.get('data'), { 'greet': 'Hello ekampf!' }
+            response_dict.get('data'), {'greet': 'Hello ekampf!'}
         )
 
     def testPOST_reports_argument_validation_errors(self):
