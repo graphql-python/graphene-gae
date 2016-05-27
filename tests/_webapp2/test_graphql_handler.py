@@ -1,10 +1,11 @@
+import webapp2
 from tests.base_test import BaseTest
 
 import json
 import webtest
 import graphene
 
-from graphene_gae.webapp2 import graphql_application
+from graphene_gae.webapp2 import graphql_application, GraphQLHandler
 
 __author__ = 'ekampf'
 
@@ -49,6 +50,16 @@ class TestGraphQLHandler(BaseTest):
         BaseTest.setUp(self)
 
         self.app = webtest.TestApp(graphql_application)
+
+    def testPOST_noSchema_returns500(self):
+        graphql_application = webapp2.WSGIApplication([
+            ('/graphql', GraphQLHandler)
+        ])
+
+        app = webtest.TestApp(graphql_application)
+        response = app.post('/graphql', expect_errors=True)
+        self.assertEqual(response.status_int, 500)
+        self.assertEqual(response.json_body['errors'][0]['message'], 'GraphQL Schema is missing.')
 
     def testPOST_noInput_returns400(self):
         response = self.app.post('/graphql', expect_errors=True)
