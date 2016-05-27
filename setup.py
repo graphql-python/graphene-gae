@@ -6,7 +6,7 @@ import os
 import re
 import sys
 import unittest
-from setuptools import setup
+from setuptools import setup, find_packages
 
 root_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -59,6 +59,9 @@ def additional_tests():
     print "*** Looking for tests in %s" % setup_dir
     return unittest.defaultTestLoader.discover(setup_dir)
 
+packages = find_packages(exclude=['tests*', 'examples*'])
+print(packages)
+
 setup(
     name='graphene_gae',
     version=get_version('graphene_gae'),
@@ -67,10 +70,7 @@ setup(
     author="Eran Kampf",
     author_email='eran@ekampf.com',
     url='https://github.com/graphql-python/graphene_gae',
-    packages=[
-        'graphene_gae',
-    ],
-    package_dir={'graphene_gae': 'graphene_gae'},
+    packages=packages,
     include_package_data=True,
     install_requires=requirements,
     license="BSD",
