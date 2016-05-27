@@ -161,3 +161,15 @@ class TestGraphQLHandler(BaseTest):
         self.assertEqual('universe', response.json_body['data']['changeDefaultGreeting']['defaultGreeting'])
         self.assertEqual(True, response.json_body['data']['changeDefaultGreeting']['ok'])
 
+    def testPOST_override_pretty_via_query_param(self):
+        response = self.app.post('/graphql?pretty=true', params=json.dumps(dict(
+            query='query helloYou { greet(who: "You") }'
+        )))
+        self.assertEqual(response.body, '{\n  "data": {\n    "greet": "Hello You!"\n  }\n}')
+
+    def testPOST_override_pretty_via_post_param(self):
+        response = self.app.post('/graphql', params=json.dumps(dict(
+            query='query helloYou { greet(who: "You") }',
+            pretty=True
+        )))
+        self.assertEqual(response.body, '{\n  "data": {\n    "greet": "Hello You!"\n  }\n}')

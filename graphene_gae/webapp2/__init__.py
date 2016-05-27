@@ -10,12 +10,14 @@ __author__ = 'ekampf'
 class GraphQLHandler(webapp2.RequestHandler):
     def post(self):
         schema = self.app.config.get('graphql_schema')
-        pretty = self.app.config.get('graphql_pretty', True)
+        pretty = self.app.config.get('graphql_pretty', False)
 
         if not schema:
             webapp2.abort(500, detail='GraphQL Schema is missing.')
 
-        query, operation_name, variables = self._get_grapl_params()
+        query, operation_name, variables, pretty_override = self._get_grapl_params()
+        pretty = pretty if not pretty_override else pretty_override
+
         result = schema.execute(query,
                                 operation_name=operation_name,
                                 variable_values=variables,
@@ -30,7 +32,7 @@ class GraphQLHandler(webapp2.RequestHandler):
             return self.failed_response(400, response, pretty=pretty)
 
         response['data'] = result.data
-        return self.successful_response(response)
+        return self.successful_response(response, pretty=pretty)
 
     def handle_exception(self, exception, debug):
         logging.exception(exception)
@@ -56,7 +58,9 @@ class GraphQLHandler(webapp2.RequestHandler):
             except:
                 raise webapp2.abort(400, 'Variables are invalid JSON.')
 
-        return query, operation_name, variables
+        pretty = self.request.json_body.get('pretty') or self.request.GET.get('pretty')
+
+        return query, operation_name, variables, pretty
 
     def _get_root_value(self):
         return None
@@ -70,13 +74,13 @@ class GraphQLHandler(webapp2.RequestHandler):
 
         return {'message': str(error)}
 
-    def __json_encode(self, data, pretty=True):
+    def __json_encode(self, data, pretty=False):
         if pretty:
             return json.dumps(data, indent=2, sort_keys=True, separators=(',', ': '))
 
         return json.dumps(data)
 
-    def successful_response(self, data, pretty=True):
+    def successful_response(self, data, pretty=False):
         serialized_data = self.__json_encode(data, pretty=pretty)
 
         self.response.set_status(200, 'Success')
@@ -84,7 +88,7 @@ class GraphQLHandler(webapp2.RequestHandler):
         self.response.content_type = 'application/json'
         self.response.out.write(serialized_data)
 
-    def failed_response(self, error_code, data, pretty=True):
+    def failed_response(self, error_code, data, pretty=False):
         serialized_data = self.__json_encode(data, pretty=pretty)
 
         self.response.set_status(error_code)
