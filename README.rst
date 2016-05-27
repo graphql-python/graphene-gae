@@ -2,7 +2,7 @@
 Graphene GAE
 ===============================
 
-.. image:: https://travis-ci.org/graphql-python/graphene-gae.svg
+.. image:: https://travis-ci.org/graphql-python/graphene-gae.svg?branch=master
         :target: https://travis-ci.org/graphql-python/graphene-gae
 
 .. image:: https://coveralls.io/repos/github/graphql-python/graphene-gae/badge.svg?branch=master
