@@ -71,7 +71,7 @@ setup(
     long_description=readme + '\n\n' + history,
     author="Eran Kampf",
     author_email='eran@ekampf.com',
-    url='https://github.com/graphql-python/graphene_gae',
+    url='https://github.com/graphql-python/graphene-gae',
     packages=find_packages(exclude=['tests*', 'examples*']),
     include_package_data=True,
     install_requires=requirements,
