@@ -10,8 +10,8 @@ __author__ = 'ekampf'
 
 class GraphQLHandler(webapp2.RequestHandler):
     def post(self):
-        schema = self.app.config.get('graphql_schema')
-        pretty = self.app.config.get('graphql_pretty', False)
+        schema = self._get_schema()
+        pretty = self._get_pretty()
 
         if not schema:
             webapp2.abort(500, detail='GraphQL Schema is missing.')
@@ -45,6 +45,12 @@ class GraphQLHandler(webapp2.RequestHandler):
         self.failed_response(status_code, {
             'errors': [self.__format_error(exception)]
         })
+
+    def _get_schema(self):
+        return self.app.config.get('graphql_schema')
+
+    def _get_pretty(self):
+        return self.app.config.get('graphql_pretty', False)
 
     def _get_grapl_params(self):
         query = None if not self.request.body else self.request.json_body.get('query')
