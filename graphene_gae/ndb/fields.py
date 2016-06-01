@@ -39,6 +39,10 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
         except StopIteration:
             break
 
+        if keys_only:
+            # entity is actualy an ndb.Key and we need to create an empty entity to hold it
+            entity = edge_type.node_type._meta.model(key=entity)
+
         edge = edge_type(node=entity, cursor=iter.cursor_after().urlsafe())
         edges.append(edge)
 

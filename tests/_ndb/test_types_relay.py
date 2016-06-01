@@ -176,6 +176,34 @@ class TestNDBTypesRelay(BaseTest):
             self.assertLength(comments, 1)
             self.assertEqual(comments[0]['node']['body'], "c" + article['summary'])
 
+    def test_connectionField_keysOnly(self):
+        a1 = Article(headline="Test1", summary="1").put()
+        a2 = Article(headline="Test2", summary="2").put()
+        a3 = Article(headline="Test3", summary="3").put()
+
+        Comment(parent=a1, body="c1").put()
+        Comment(parent=a2, body="c2").put()
+        Comment(parent=a3, body="c3").put()
+
+        result = schema.execute("""
+            query Articles {
+                articles(keysOnly: true) {
+                    edges {
+                        cursor,
+                        node {
+                            id
+                        }
+                    }
+
+                }
+            }
+            """)
+
+        self.assertEmpty(result.errors)
+
+        articles = result.data.get('articles', {}).get('edges')
+        self.assertLength(articles, 3)
+
     def test_connectionField_empty(self):
         Article(headline="Test1", summary="1").put()
 
