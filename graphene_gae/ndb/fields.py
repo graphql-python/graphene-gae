@@ -69,6 +69,9 @@ class NdbConnectionField(relay.ConnectionField):
         kwargs['connection_type'] = kwargs.pop('connection_type', NdbConnection)
         super(NdbConnectionField, self).__init__(*args, **kwargs)
 
+        if not self.default:
+            self.default = self.model.query()
+
     @property
     def model(self):
         return self.type._meta.model
