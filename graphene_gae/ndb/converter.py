@@ -20,7 +20,11 @@ p = inflect.engine()
 def convert_ndb_scalar_property(graphene_type, ndb_prop):
     description = "%s %s property" % (ndb_prop._name, graphene_type)
     if ndb_prop._repeated:
-        return graphene_type(description=description).List
+        l = graphene_type(description=description).List
+        return l if not ndb_prop._required else l.NonNull
+
+    if ndb_prop._required:
+        return graphene_type(description=description).NonNull
 
     return graphene_type(description=description)
 
@@ -82,6 +86,10 @@ def convert_local_structured_property(ndb_structured_prop, meta):
     return ConversionResult(name=name, field=Field(t))
 
 
+def convert_computed_property(ndb_computed_prop, meta):
+    return convert_ndb_scalar_property(String, ndb_computed_prop)
+
+
 converters = {
     ndb.StringProperty: convert_ndb_string_property,
     ndb.TextProperty: convert_ndb_string_property,
@@ -92,7 +100,8 @@ converters = {
     ndb.DateProperty: convert_ndb_datetime_property,
     ndb.DateTimeProperty: convert_ndb_datetime_property,
     ndb.KeyProperty: convert_ndb_key_propety,
-    ndb.LocalStructuredProperty: convert_local_structured_property
+    ndb.LocalStructuredProperty: convert_local_structured_property,
+    ndb.ComputedProperty: convert_computed_property
 }
 
 
