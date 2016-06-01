@@ -31,7 +31,7 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
 
     iter = query.iter(produce_cursors=True, start_cursor=start_cursor, batch_size=batch_size, keys_only=keys_only)
 
-    page_size = first if first else 10
+    page_size = first if first else batch_size
     edges = []
     while len(edges) < page_size:
         try:
