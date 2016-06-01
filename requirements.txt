@@ -1,3 +1,6 @@
+pip
+setuptools
+
 wheel==0.23.0
 tox
 coverage

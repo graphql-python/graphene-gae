@@ -1,3 +1,4 @@
+import mock
 from tests.base_test import BaseTest
 
 from google.appengine.ext import ndb
@@ -28,6 +29,17 @@ class TestNDBConverter(BaseTest):
             convert_ndb_property(prop)
 
         self.assertTrue("Don't know how to convert" in context.exception.message, msg=context.exception.message)
+
+    @mock.patch('graphene_gae.ndb.converter.converters')
+    def testNoneResult_raisesException(self, patch_convert):
+        from graphene_gae.ndb.converter import convert_ndb_property
+        patch_convert.get.return_value = lambda _, __: None
+        with self.assertRaises(Exception) as context:
+            prop = ndb.StringProperty()
+            prop._code_name = "my_prop"
+            convert_ndb_property(prop)
+
+        self.assertTrue("Failed to convert NDB field my_prop" in context.exception.message, msg=context.exception.message)
 
     def testStringProperty_shouldConvertToString(self):
         self.__assert_conversion(ndb.StringProperty, graphene.String)

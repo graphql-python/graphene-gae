@@ -53,7 +53,8 @@ test_requirements = [
     'PyYAML==3.11',
     'webapp2==2.5.2',
     'webob==1.2.3',
-    'WebTest==2.0.11'
+    'WebTest==2.0.11',
+    'mock'
 ]
 
 
