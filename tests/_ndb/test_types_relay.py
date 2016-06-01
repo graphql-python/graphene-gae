@@ -12,6 +12,7 @@ __author__ = 'ekampf'
 
 schema = graphene.Schema()
 
+
 @schema.register
 class AddressType(NdbNode):
     class Meta:
