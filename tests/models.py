@@ -35,6 +35,7 @@ class Article(ndb.Model):
     headline = ndb.StringProperty()
     summary = ndb.StringProperty()
     body = ndb.TextProperty()
+    body_hash = ndb.ComputedProperty(lambda self: self.calc_body_hash())
     keywords = ndb.StringProperty(repeated=True)
 
     author_key = ndb.KeyProperty(kind='Author')
@@ -42,3 +43,8 @@ class Article(ndb.Model):
 
     created_at = ndb.DateTimeProperty(auto_now_add=True)
     updated_at = ndb.DateTimeProperty(auto_now=True)
+
+    def calc_body_hash(self):
+        import hashlib
+        return hashlib.md5(self.body).hexdigit() if self.body else None
+
