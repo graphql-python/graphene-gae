@@ -32,7 +32,7 @@ class Comment(ndb.Model):
 
 
 class Article(ndb.Model):
-    headline = ndb.StringProperty()
+    headline = ndb.StringProperty(required=True)
     summary = ndb.StringProperty()
     body = ndb.TextProperty()
     body_hash = ndb.ComputedProperty(lambda self: self.calc_body_hash())
