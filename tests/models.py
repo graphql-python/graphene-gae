@@ -3,9 +3,22 @@ from google.appengine.ext import ndb
 __author__ = 'ekampf'
 
 
+class Address(ndb.Model):
+    address1 = ndb.StringProperty()
+    address2 = ndb.StringProperty()
+    city = ndb.StringProperty()
+
+
+class PhoneNumber(ndb.Model):
+    area = ndb.StringProperty()
+    number = ndb.StringProperty()
+
+
 class Author(ndb.Model):
     name = ndb.StringProperty()
     email = ndb.StringProperty()
+    addresses = ndb.LocalStructuredProperty(Address, repeated=True)
+    mobile = ndb.LocalStructuredProperty(PhoneNumber)
 
 
 class Tag(ndb.Model):

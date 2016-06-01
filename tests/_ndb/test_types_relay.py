@@ -5,12 +5,23 @@ from google.appengine.ext import ndb
 import graphene
 from graphene_gae import NdbNode, NdbConnectionField
 
-from tests.models import Tag, Comment, Article, Author
+from tests.models import Tag, Comment, Article, Author, Address, PhoneNumber
 
 __author__ = 'ekampf'
 
 
 schema = graphene.Schema()
+
+@schema.register
+class AddressType(NdbNode):
+    class Meta:
+        model = Address
+
+
+@schema.register
+class PhoneNumberType(NdbNode):
+    class Meta:
+        model = PhoneNumber
 
 
 @schema.register
