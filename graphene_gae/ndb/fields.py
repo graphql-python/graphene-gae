@@ -4,6 +4,7 @@ from google.appengine.ext.db import BadArgumentError
 from graphene import relay
 from graphene.core.exceptions import SkipField
 from graphene.core.types.base import FieldType
+from graphene.core.types.scalars import Boolean, Int
 
 __author__ = 'ekampf'
 
@@ -24,9 +25,11 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
     first = full_args.get('first')
     after = full_args.get('after')
     has_previous_page = bool(after)
+    keys_only = full_args.get('keys_only', False)
+    batch_size = full_args.get('batch_size', 10)
     start_cursor = ndb.Cursor(urlsafe=after) if after else None
 
-    iter = query.iter(produce_cursors=True, start_cursor=start_cursor, batch_size=10)
+    iter = query.iter(produce_cursors=True, start_cursor=start_cursor, batch_size=batch_size, keys_only=keys_only)
 
     page_size = first if first else 10
     edges = []
@@ -65,9 +68,16 @@ class NdbConnection(relay.types.Connection):
 
 
 class NdbConnectionField(relay.ConnectionField):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, type, **kwargs):
         kwargs['connection_type'] = kwargs.pop('connection_type', NdbConnection)
-        super(NdbConnectionField, self).__init__(*args, **kwargs)
+        super(NdbConnectionField, self).__init__(
+            type,
+            keys_only=Boolean(),
+            batch_size=Int(),
+            **kwargs)
+
+        if not self.default:
+            self.default = self.model.query()
 
     @property
     def model(self):

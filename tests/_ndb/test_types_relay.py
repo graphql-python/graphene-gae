@@ -45,9 +45,6 @@ class ArticleType(NdbNode):
 class QueryRoot(graphene.ObjectType):
     articles = NdbConnectionField(ArticleType)
 
-    def resolve_articles(self, args, info):
-        return Article.query()
-
 
 schema.query = QueryRoot
 
