@@ -8,6 +8,10 @@ History
 * NdbConnectionField added arguments that can be used in quert:
     * keys_only - to execute a keys only query
     * batch_size - to control the NDB query iteration batch size
+* Added support for LocalStructuredProperty.
+    * Given a property `ndb.LocalStructuredType(Something)` it will automatically
+      map to a Field(SomethingType) - SomethingType has to be part of the schema.
+    * Support for `repeated` and `required` propeties.
 
 
 0.1.3 (2016-05-27)
