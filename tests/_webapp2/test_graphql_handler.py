@@ -184,3 +184,7 @@ class TestGraphQLHandler(BaseTest):
             pretty=True
         )))
         self.assertEqual(response.body, '{\n  "data": {\n    "greet": "Hello You!"\n  }\n}')
+
+    def testPOST_stringBody_readsQueryFromBodyAndRestFromGET(self):
+        response = self.app.post('/graphql?pretty=True', params='query helloYou { greet(who: "You") }')
+        self.assertEqual(response.body, '{\n  "data": {\n    "greet": "Hello You!"\n  }\n}')

@@ -53,19 +53,26 @@ class GraphQLHandler(webapp2.RequestHandler):
         return self.app.config.get('graphql_pretty', False)
 
     def _get_grapl_params(self):
-        query = None if not self.request.body else self.request.json_body.get('query')
+        try:
+            request_data = self.request.json_body
+        except:
+            request_data = {}
+
+        request_data.update(dict(self.request.GET))
+
+        query = request_data.get('query', self.request.body)
         if not query:
             webapp2.abort(400, "Query is empty.")
 
-        operation_name = self.request.json_body.get('operation_name')
-        variables = self.request.json_body.get('variables')
+        operation_name = request_data.get('operation_name')
+        variables = request_data.get('variables')
         if variables and isinstance(variables, six.text_type):
             try:
                 variables = json.loads(variables)
             except:
                 raise webapp2.abort(400, 'Variables are invalid JSON.')
 
-        pretty = self.request.json_body.get('pretty') or self.request.GET.get('pretty')
+        pretty = request_data.get('pretty')
 
         return query, operation_name, variables, pretty
 
