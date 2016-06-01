@@ -85,9 +85,9 @@ def convert_local_structured_property(ndb_structured_prop, meta):
 
     return ConversionResult(name=name, field=Field(t))
 
+
 def convert_computed_property(ndb_computed_prop, meta):
     return convert_ndb_scalar_property(String, ndb_computed_prop)
-
 
 
 converters = {
