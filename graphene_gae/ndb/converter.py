@@ -81,7 +81,8 @@ def convert_ndb_key_propety(ndb_key_prop, meta):
         resolved_prop_name = name[:-4] if name.endswith('_key') else p.plural(name[:-5])
     else:
         # Case #2 - name is of form 'store'
-        string_prop_name = name + '_keys' if ndb_key_prop._repeated else name + '_key'
+        singular_name = p.singular_noun(name) if p.singular_noun(name) else name
+        string_prop_name = singular_name + '_keys' if ndb_key_prop._repeated else singular_name + '_key'
         resolved_prop_name = name
 
     string_field = NdbKeyStringField(name)
