@@ -103,7 +103,7 @@ class TestNDBTypes(BaseTest):
         article = dict(result.data['articles'][0])
         author = dict(article['author'])
         self.assertDictEqual(author, {'name': u'john dow', 'email': u'john@dow.com'})
-        self.assertDictContainsSubset(dict(headline='h1', summary='s1', authorKey=author_key.urlsafe()), article)
+        self.assertDictContainsSubset(dict(headline='h1', authorKey=author_key.urlsafe()), article)
 
 
 
