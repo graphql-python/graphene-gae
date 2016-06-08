@@ -150,30 +150,6 @@ class NdbKeyField(FieldType):
         key = getattr(entity, self.name)
 
         if isinstance(key, list):
-            return self.__auto_resolve_repeated(entity, key)
+            return ndb.get_multi(key)
 
-        return self.__auto_resolve_key(entity, key)
-
-    def __auto_resolve_repeated(self, entity, keys):
-        if not self.name.endswith('_keys'):
-            return ndb.get_multi(keys)
-
-        cache_name = self.name[:-4]  # TODO: pluralise
-        if hasattr(entity, cache_name):
-            return getattr(entity, cache_name)
-
-        values = ndb.get_multi(keys)
-        setattr(entity, cache_name, values)
-        return values
-
-    def __auto_resolve_key(self, entity, key):
-        if not self.name.endswith('_key'):
-            return key.get()
-
-        cache_name = self.name[:-4]
-        if hasattr(entity, cache_name):
-            return getattr(entity, cache_name)
-
-        value = key.get()
-        setattr(entity, cache_name, value)
-        return value
+        return key.get()
