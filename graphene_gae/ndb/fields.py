@@ -4,7 +4,7 @@ from google.appengine.ext.db import BadArgumentError
 from graphene import relay
 from graphene.core.exceptions import SkipField
 from graphene.core.types.base import FieldType
-from graphene.core.types.scalars import Boolean, Int
+from graphene.core.types.scalars import Boolean, Int, String
 
 __author__ = 'ekampf'
 
@@ -87,6 +87,25 @@ class NdbConnectionField(relay.ConnectionField):
     @property
     def model(self):
         return self.type._meta.model
+
+
+class NdbKeyStringField(String):
+    def __init__(self, name, *args, **kwargs):
+        self.name = name
+
+        if 'resolver' not in kwargs:
+            kwargs['resolver'] = self.default_resolver
+
+        super(NdbKeyStringField, self).__init__(*args, **kwargs)
+
+    def default_resolver(self, node, args, info):
+        entity = node.instance
+        key = getattr(entity, self.name)
+
+        if isinstance(key, list):
+            return [k.urlsafe() for k in key]
+
+        return key.urlsafe()
 
 
 class NdbKeyField(FieldType):

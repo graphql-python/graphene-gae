@@ -11,9 +11,6 @@ class NdbOptions(ObjectTypeOptions):
     * model - which model to convert
     * only_fields - only convert the following property names
     * exclude_fields - exclude specified properties from conversion
-    * remove_key_property_suffix - remove '_key' suffix from KeyProperty
-        * user_key => user
-        * user_keys => users
 
     """
 
@@ -25,7 +22,6 @@ class NdbOptions(ObjectTypeOptions):
         self.valid_attrs += self.VALID_ATTRS
         self.only_fields = None
         self.exclude_fields = []
-        self.remove_key_property_suffix = True
 
     def contribute_to_class(self, cls, name):
         super(NdbOptions, self).contribute_to_class(cls, name)

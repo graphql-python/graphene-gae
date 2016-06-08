@@ -82,6 +82,32 @@ class TestNDBTypes(BaseTest):
 
         assert 'not an NDB model' in str(context.exception.message)
 
+    def testNdbKeyField_whenOnlyIDRequested_doesntQueryEntity(self):
+        author_key = Author(name="john dow", email="john@dow.com").put()
+        Article(headline="h1", summary="s1", author_key=author_key).put()
+
+        print str(schema)
+        result = schema.execute('''
+            query ArticleWithAuthorID {
+                articles {
+                    headline
+                    authorKey
+                    author {
+                        name, email
+                    }
+                }
+            }
+        ''')
+
+        self.assertEmpty(result.errors)
+
+        article = dict(result.data['articles'][0])
+        author = dict(article['author'])
+        self.assertDictEqual(author, {'name': u'john dow', 'email': u'john@dow.com'})
+        self.assertDictContainsSubset(dict(headline='h1', summary='s1', authorKey=author_key.urlsafe()), article)
+
+
+
     def testQuery_excludedField(self):
         Article(headline="h1", summary="s1").put()
 
