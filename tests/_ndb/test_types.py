@@ -86,7 +86,6 @@ class TestNDBTypes(BaseTest):
         author_key = Author(name="john dow", email="john@dow.com").put()
         Article(headline="h1", summary="s1", author_key=author_key).put()
 
-        print str(schema)
         result = schema.execute('''
             query ArticleWithAuthorID {
                 articles {
