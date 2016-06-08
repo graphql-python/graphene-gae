@@ -121,7 +121,6 @@ class TestNDBConverter(BaseTest):
         self.assertIsInstance(conversion[1].field, NonNull)
         self.assertIsInstance(conversion[1].field.of_type, NdbKeyField)
 
-
     def testKeyProperty_withoutSuffix(self):
         prop = ndb.KeyProperty()
         prop._code_name = 'user'
