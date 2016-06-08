@@ -3,7 +3,11 @@
 History
 -------
 
-0.1.4 (TBD)
+0.1.5 (2016-06-08)
+---------------------
+* Fixed behavior of ndb.KeyProperty ([PR #14](https://github.com/graphql-python/graphene-gae/pull/14))
+
+0.1.4 (2016-06-02)
 ---------------------
 * NdbConnectionField added arguments that can be used in quert:
     * keys_only - to execute a keys only query
@@ -13,6 +17,7 @@ History
     * Given a property `ndb.LocalStructuredType(Something)` it will automatically
       map to a Field(SomethingType) - SomethingType has to be part of the schema.
     * Support for `repeated` and `required` propeties.
+
 
 0.1.3 (2016-05-27)
 ---------------------

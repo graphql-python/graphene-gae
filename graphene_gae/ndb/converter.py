@@ -8,7 +8,7 @@ from graphene.core.types import Field
 from graphene.core.types.definitions import List
 from graphene.core.types.scalars import String, Boolean, Int, Float
 from graphene.core.types.custom_scalars import JSONString, DateTime
-from graphene_gae.ndb.fields import NdbKeyField
+from graphene_gae.ndb.fields import NdbKeyField, NdbKeyStringField
 
 __author__ = 'ekampf'
 
@@ -17,16 +17,16 @@ ConversionResult = namedtuple('ConversionResult', ['name', 'field'])
 p = inflect.engine()
 
 
-def convert_ndb_scalar_property(graphene_type, ndb_prop):
+def convert_ndb_scalar_property(graphene_type, ndb_prop, **kwargs):
     description = "%s %s property" % (ndb_prop._name, graphene_type)
+    result = graphene_type(description=description, **kwargs)
     if ndb_prop._repeated:
-        l = graphene_type(description=description).List
-        return l if not ndb_prop._required else l.NonNull
+        result = result.List
 
     if ndb_prop._required:
-        return graphene_type(description=description).NonNull
+        result = result.NonNull
 
-    return graphene_type(description=description)
+    return result
 
 
 def convert_ndb_string_property(ndb_prop, meta):
@@ -54,22 +54,69 @@ def convert_ndb_datetime_property(ndb_prop, meta):
 
 
 def convert_ndb_key_propety(ndb_key_prop, meta):
-    remove_key_suffix = meta.remove_key_property_suffix if meta else True
+    """
+    Two conventions for handling KeyProperties:
+    #1.
+        Given:
+            store_key = ndb.KeyProperty(...)
 
+        Result is 2 fields:
+            store_key = graphene.String() -> resolves to store_key.urlsafe()
+            store     = NdbKeyField()     -> resolves to entity
+
+    #2.
+        Given:
+            store = ndb.KeyProperty(...)
+
+        Result is 2 fields:
+            store_key = graphene.String() -> resolves to store_key.urlsafe()
+            store     = NdbKeyField()     -> resolves to entity
+
+    """
     name = ndb_key_prop._code_name
-    if remove_key_suffix:
-        if name.endswith('_key'):
-            name = name[:-4]
 
-        if name.endswith('_keys'):
-            name = name[:-5]
-            name = p.plural(name)
+    if name.endswith('_key') or name.endswith('_keys'):
+        # Case #1 - name is of form 'store_key' or 'store_keys'
+        string_prop_name = name
+        resolved_prop_name = name[:-4] if name.endswith('_key') else p.plural(name[:-5])
+    else:
+        # Case #2 - name is of form 'store'
+        singular_name = p.singular_noun(name) if p.singular_noun(name) else name
+        string_prop_name = singular_name + '_keys' if ndb_key_prop._repeated else singular_name + '_key'
+        resolved_prop_name = name
 
-    field = NdbKeyField(ndb_key_prop._code_name, ndb_key_prop._kind)
+    string_field = NdbKeyStringField(name)
+    resolved_field = NdbKeyField(name, ndb_key_prop._kind)
+
     if ndb_key_prop._repeated:
-        field = field.List
+        string_field = string_field.List
+        resolved_field = resolved_field.List
 
-    return ConversionResult(name=name, field=field)
+    if ndb_key_prop._required:
+        string_field = string_field.NonNull
+        resolved_field = resolved_field.NonNull
+
+    string_key_field_result = ConversionResult(name=string_prop_name, field=string_field)
+    resolve_key_field_result = ConversionResult(name=resolved_prop_name, field=resolved_field)
+
+    return [
+        string_key_field_result,
+        resolve_key_field_result
+    ]
+
+    # if remove_key_suffix:
+    #     if name.endswith('_key'):
+    #         name = name[:-4]
+    #
+    #     if name.endswith('_keys'):
+    #         name = name[:-5]
+    #         name = p.plural(name)
+    #
+    # field = NdbKeyField(ndb_key_prop._code_name, ndb_key_prop._kind)
+    # if ndb_key_prop._repeated:
+    #     field = field.List
+    #
+    # return ConversionResult(name=name, field=field)
 
 
 def convert_local_structured_property(ndb_structured_prop, meta):
@@ -114,7 +161,7 @@ def convert_ndb_property(prop, meta=None):
     if not result:
         raise Exception("Failed to convert NDB field %s (%s)" % (prop._code_name, prop))
 
-    if isinstance(result, ConversionResult):
+    if isinstance(result, (list, ConversionResult,)):
         return result
 
     return ConversionResult(name=prop._code_name, field=result)

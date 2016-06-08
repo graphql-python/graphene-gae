@@ -31,8 +31,12 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
             if is_not_in_only or is_excluded:
                 continue
 
-            conversion_result = convert_ndb_property(prop, cls._meta)
-            cls.add_to_class(conversion_result.name, conversion_result.field)
+            conversion_results = convert_ndb_property(prop, cls._meta)
+            if not isinstance(conversion_results, list):
+                conversion_results = [conversion_results]
+
+            for r in conversion_results:
+                cls.add_to_class(r.name, r.field)
 
     def construct(cls, *args, **kwargs):
         super(NdbObjectTypeMeta, cls).construct(*args, **kwargs)

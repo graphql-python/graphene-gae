@@ -4,7 +4,7 @@ from google.appengine.ext.db import BadArgumentError
 from graphene import relay
 from graphene.core.exceptions import SkipField
 from graphene.core.types.base import FieldType
-from graphene.core.types.scalars import Boolean, Int
+from graphene.core.types.scalars import Boolean, Int, String
 
 __author__ = 'ekampf'
 
@@ -89,6 +89,25 @@ class NdbConnectionField(relay.ConnectionField):
         return self.type._meta.model
 
 
+class NdbKeyStringField(String):
+    def __init__(self, name, *args, **kwargs):
+        self.name = name
+
+        if 'resolver' not in kwargs:
+            kwargs['resolver'] = self.default_resolver
+
+        super(NdbKeyStringField, self).__init__(*args, **kwargs)
+
+    def default_resolver(self, node, args, info):
+        entity = node.instance
+        key = getattr(entity, self.name)
+
+        if isinstance(key, list):
+            return [k.urlsafe() for k in key]
+
+        return key.urlsafe() if key else None
+
+
 class NdbKeyField(FieldType):
     def __init__(self, name, kind, *args, **kwargs):
         self.name = name
@@ -107,7 +126,7 @@ class NdbKeyField(FieldType):
                 "You can either register the type manually "
                 "using @schema.register. "
                 "Or disable the field in %s" % (
-                    self.model,
+                    self.kind,
                     self.parent,
                 )
             )
@@ -131,30 +150,7 @@ class NdbKeyField(FieldType):
         key = getattr(entity, self.name)
 
         if isinstance(key, list):
-            return self.__auto_resolve_repeated(entity, key)
+            entities = ndb.get_multi(key)
+            return entities
 
-        return self.__auto_resolve_key(entity, key)
-
-    def __auto_resolve_repeated(self, entity, keys):
-        if not self.name.endswith('_keys'):
-            return ndb.get_multi(keys)
-
-        cache_name = self.name[:-4]  # TODO: pluralise
-        if hasattr(entity, cache_name):
-            return getattr(entity, cache_name)
-
-        values = ndb.get_multi(keys)
-        setattr(entity, cache_name, values)
-        return values
-
-    def __auto_resolve_key(self, entity, key):
-        if not self.name.endswith('_key'):
-            return key.get()
-
-        cache_name = self.name[:-4]
-        if hasattr(entity, cache_name):
-            return getattr(entity, cache_name)
-
-        value = key.get()
-        setattr(entity, cache_name, value)
-        return value
+        return key.get()

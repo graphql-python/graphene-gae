@@ -2,7 +2,7 @@ from tests.base_test import BaseTest
 
 import graphene
 
-from graphene_gae import NdbObjectType
+from graphene_gae import NdbObjectType, NdbKeyField
 from tests.models import Tag, Comment, Article, Address, Author, PhoneNumber
 
 __author__ = 'ekampf'
@@ -81,6 +81,27 @@ class TestNDBTypes(BaseTest):
                     model = 1
 
         assert 'not an NDB model' in str(context.exception.message)
+
+    def testNdbObjectType_keyProperty_kindDoesntExist_raisesException(self):
+        with self.assertRaises(Exception) as context:
+            class ArticleType(NdbObjectType):
+                class Meta:
+                    model = Article
+                    only_fields = ('prop',)
+
+                prop = NdbKeyField('foo', 'bar')
+
+            class QueryType(graphene.ObjectType):
+                articles = graphene.List(ArticleType)
+
+                @graphene.resolve_only_args
+                def resolve_articles(self):
+                    return Article.query()
+
+            schema = graphene.Schema(query=QueryType)
+            schema.execute('query test {  articles { prop } }')
+
+        self.assertIn("Model 'bar' is not accessible by the schema.", str(context.exception.message))
 
     def testQuery_excludedField(self):
         Article(headline="h1", summary="s1").put()
@@ -250,3 +271,58 @@ class TestNDBTypes(BaseTest):
         addresses = [dict(d) for d in author["addresses"]]
         self.assertIn(address1.to_dict(), addresses)
         self.assertIn(address2.to_dict(), addresses)
+
+    def testQuery_keyProperty(self):
+        author_key = Author(name="john dow", email="john@dow.com").put()
+        Article(headline="h1", summary="s1", author_key=author_key).put()
+
+        result = schema.execute('''
+            query ArticleWithAuthorID {
+                articles {
+                    headline
+                    authorKey
+                    author {
+                        name, email
+                    }
+                }
+            }
+        ''')
+
+        self.assertEmpty(result.errors)
+
+        article = dict(result.data['articles'][0])
+        author = dict(article['author'])
+        self.assertDictEqual(author, {'name': u'john dow', 'email': u'john@dow.com'})
+        self.assertDictContainsSubset(dict(headline='h1', authorKey=author_key.urlsafe()), article)
+
+    def testQuery_repeatedKeyProperty(self):
+        tk1 = Tag(name="t1").put()
+        tk2 = Tag(name="t2").put()
+        tk3 = Tag(name="t3").put()
+        tk4 = Tag(name="t4").put()
+        Article(headline="h1", summary="s1", tags=[tk1, tk2, tk3, tk4]).put()
+
+        print str(schema)
+
+        result = schema.execute('''
+            query ArticleWithAuthorID {
+                articles {
+                    headline
+                    authorKey
+                    tagKeys
+                    tags {
+                        name
+                    }
+                }
+            }
+        ''')
+
+        self.assertEmpty(result.errors)
+
+        article = dict(result.data['articles'][0])
+        self.assertListEqual(map(lambda k: k.urlsafe(), [tk1, tk2, tk3, tk4]), article['tagKeys'])
+
+        self.assertLength(article['tags'], 4)
+        for i in range(0, 3):
+            self.assertEqual(article['tags'][i]['name'], 't%s' % (i + 1))
+
