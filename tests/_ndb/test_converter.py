@@ -5,7 +5,9 @@ from google.appengine.ext import ndb
 
 import graphene
 from graphene.core.types.custom_scalars import DateTime, JSONString
+from graphene.core.types.definitions import List, NonNull
 
+from graphene_gae.ndb.fields import NdbKeyStringField, NdbKeyField
 from graphene_gae.ndb.converter import convert_ndb_property
 
 __author__ = 'ekampf'
@@ -73,30 +75,63 @@ class TestNDBConverter(BaseTest):
     def testJsonProperty_shouldConvertToString(self):
         self.__assert_conversion(ndb.JsonProperty, JSONString)
 
-    def testKeyProperty_withSuffixRemoval_removesSuffix(self):
+    def testKeyProperty_withSuffix(self):
         prop = ndb.KeyProperty()
-        prop._code_name = "user_key"
+        prop._code_name = 'user_key'
 
         conversion = convert_ndb_property(prop)
-        self.assertEqual(conversion.name, "user")
 
-    def testKeyProperty_repeatedPlural_withSuffixRemoval_removesSuffixAndPluralName(self):
-        prop = ndb.KeyProperty()
-        prop._code_name = "user_keys"
-        conversion = convert_ndb_property(prop)
-        self.assertEqual(conversion.name, "users")
+        self.assertLength(conversion, 2)
 
-        prop = ndb.KeyProperty()
-        prop._code_name = "tag_name_keys"
-        conversion = convert_ndb_property(prop)
-        self.assertEqual(conversion.name, "tag_names")
+        self.assertEqual(conversion[0].name, 'user_key')
+        self.assertIsInstance(conversion[0].field, NdbKeyStringField)
 
-        prop = ndb.KeyProperty()
-        prop._code_name = "person_keys"
-        conversion = convert_ndb_property(prop)
-        self.assertEqual(conversion.name, "people")
+        self.assertEqual(conversion[1].name, 'user')
+        self.assertIsInstance(conversion[1].field, NdbKeyField)
 
-        prop = ndb.KeyProperty()
-        prop._code_name = "universal_category_keys"
+    def testKeyProperty_withSuffix_repeated(self):
+        prop = ndb.KeyProperty(repeated=True)
+        prop._code_name = 'user_keys'
+
         conversion = convert_ndb_property(prop)
-        self.assertEqual(conversion.name, "universal_categories")
+
+        self.assertLength(conversion, 2)
+
+        self.assertEqual(conversion[0].name, 'user_keys')
+        self.assertIsInstance(conversion[0].field, List)
+        self.assertIsInstance(conversion[0].field.of_type, NdbKeyStringField)
+
+        self.assertEqual(conversion[1].name, 'users')
+        self.assertIsInstance(conversion[1].field, List)
+        self.assertIsInstance(conversion[1].field.of_type, NdbKeyField)
+
+    def testKeyProperty_withSuffix_required(self):
+        prop = ndb.KeyProperty(required=True)
+        prop._code_name = 'user_key'
+
+        conversion = convert_ndb_property(prop)
+
+        self.assertLength(conversion, 2)
+
+        self.assertEqual(conversion[0].name, 'user_key')
+        self.assertIsInstance(conversion[0].field, NonNull)
+        self.assertIsInstance(conversion[0].field.of_type, NdbKeyStringField)
+
+        self.assertEqual(conversion[1].name, 'user')
+        self.assertIsInstance(conversion[1].field, NonNull)
+        self.assertIsInstance(conversion[1].field.of_type, NdbKeyField)
+
+
+    def testKeyProperty_withoutSuffix(self):
+        prop = ndb.KeyProperty()
+        prop._code_name = 'user'
+
+        conversion = convert_ndb_property(prop)
+
+        self.assertLength(conversion, 2)
+
+        self.assertEqual(conversion[0].name, 'user_key')
+        self.assertIsInstance(conversion[0].field, NdbKeyStringField)
+
+        self.assertEqual(conversion[1].name, 'user')
+        self.assertIsInstance(conversion[1].field, NdbKeyField)
