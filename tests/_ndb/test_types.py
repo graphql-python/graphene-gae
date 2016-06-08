@@ -274,7 +274,6 @@ class TestNDBTypes(BaseTest):
         self.assertDictEqual(author, {'name': u'john dow', 'email': u'john@dow.com'})
         self.assertDictContainsSubset(dict(headline='h1', authorKey=author_key.urlsafe()), article)
 
-
     def testQuery_repeatedKeyProperty(self):
         tk1 = Tag(name="t1").put()
         tk2 = Tag(name="t2").put()
@@ -304,5 +303,5 @@ class TestNDBTypes(BaseTest):
 
         self.assertLength(article['tags'], 4)
         for i in range(0, 3):
-            self.assertEqual(article['tags'][i]['name'], 't%s' % (i+1))
+            self.assertEqual(article['tags'][i]['name'], 't%s' % (i + 1))
 
