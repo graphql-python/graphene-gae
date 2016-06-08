@@ -99,7 +99,7 @@ class TestNDBTypes(BaseTest):
                     return Article.query()
 
             schema = graphene.Schema(query=QueryType)
-            result = schema.execute('query test {  articles { prop } }')
+            schema.execute('query test {  articles { prop } }')
 
         self.assertIn("Model 'bar' is not accessible by the schema.", str(context.exception.message))
 
