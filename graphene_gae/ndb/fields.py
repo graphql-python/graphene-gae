@@ -126,7 +126,7 @@ class NdbKeyField(FieldType):
                 "You can either register the type manually "
                 "using @schema.register. "
                 "Or disable the field in %s" % (
-                    self.model,
+                    self.kind,
                     self.parent,
                 )
             )

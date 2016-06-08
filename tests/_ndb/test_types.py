@@ -2,7 +2,7 @@ from tests.base_test import BaseTest
 
 import graphene
 
-from graphene_gae import NdbObjectType
+from graphene_gae import NdbObjectType, NdbKeyField
 from tests.models import Tag, Comment, Article, Address, Author, PhoneNumber
 
 __author__ = 'ekampf'
@@ -81,6 +81,27 @@ class TestNDBTypes(BaseTest):
                     model = 1
 
         assert 'not an NDB model' in str(context.exception.message)
+
+    def testNdbObjectType_keyProperty_kindDoesntExist_raisesException(self):
+        with self.assertRaises(Exception) as context:
+            class ArticleType(NdbObjectType):
+                class Meta:
+                    model = Article
+                    only_fields = ('prop',)
+
+                prop = NdbKeyField('foo', 'bar')
+
+            class QueryType(graphene.ObjectType):
+                articles = graphene.List(ArticleType)
+
+                @graphene.resolve_only_args
+                def resolve_articles(self):
+                    return Article.query()
+
+            schema = graphene.Schema(query=QueryType)
+            result = schema.execute('query test {  articles { prop } }')
+
+        self.assertIn("Model 'bar' is not accessible by the schema.", str(context.exception.message))
 
     def testQuery_excludedField(self):
         Article(headline="h1", summary="s1").put()
