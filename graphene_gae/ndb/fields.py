@@ -105,7 +105,7 @@ class NdbKeyStringField(String):
         if isinstance(key, list):
             return [k.urlsafe() for k in key]
 
-        return key.urlsafe()
+        return key.urlsafe() if key else None
 
 
 class NdbKeyField(FieldType):
@@ -150,6 +150,7 @@ class NdbKeyField(FieldType):
         key = getattr(entity, self.name)
 
         if isinstance(key, list):
-            return ndb.get_multi(key)
+            entities = ndb.get_multi(key)
+            return entities
 
         return key.get()
