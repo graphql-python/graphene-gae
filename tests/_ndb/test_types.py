@@ -325,4 +325,3 @@ class TestNDBTypes(BaseTest):
         self.assertLength(article['tags'], 4)
         for i in range(0, 3):
             self.assertEqual(article['tags'][i]['name'], 't%s' % (i + 1))
-
