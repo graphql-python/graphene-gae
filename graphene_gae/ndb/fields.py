@@ -30,7 +30,7 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
     page_size = first if first else full_args.get('page_size', 20)
     start_cursor = ndb.Cursor(urlsafe=after) if after else None
 
-    iter = query.iter(produce_cursors=True, start_cursor=start_cursor, batch_size=batch_size, keys_only=keys_only)
+    iter = query.iter(produce_cursors=True, start_cursor=start_cursor, batch_size=batch_size, keys_only=keys_only, projection=query.projection)
 
     edges = []
     while len(edges) < page_size:
