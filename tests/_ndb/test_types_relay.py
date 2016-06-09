@@ -83,6 +83,16 @@ class TestNDBTypesRelay(BaseTest):
         self.assertIsNotNone(result)
         self.assertEqual(result.instance, article_key.get())
 
+    def testNdbNode_globalIdToKey_returnsNdbKey(self):
+        article_key = Article(
+            headline="TestGetNode",
+            summary="1",
+            author_key=Author(name="John Dow", email="john@dow.com").put(),
+        ).put()
+
+        node = ArticleType.get_node(article_key.urlsafe())
+        self.assertEqual(NdbNode.global_id_to_key(node.to_global_id()), article_key)
+
     def test_keyProperty(self):
         Article(
             headline="Test1",

@@ -5,6 +5,7 @@ from graphene import relay
 from graphene.core.classtypes.objecttype import ObjectType, ObjectTypeMeta
 
 from google.appengine.ext import ndb
+from graphql_relay import from_global_id
 
 from .options import NdbOptions
 
@@ -95,6 +96,11 @@ class NdbNode(six.with_metaclass(NdbNodeMeta, NdbNodeInstance)):
     def to_global_id(self):
         entity_id = self.key.urlsafe() if self.key else None
         return self.global_id(entity_id)
+
+    @classmethod
+    def global_id_to_key(cls, global_id):
+        _, urlsafe_key = from_global_id(global_id)
+        return ndb.Key(urlsafe=urlsafe_key)
 
     @classmethod
     def get_node(cls, urlsafe_key, info=None):
