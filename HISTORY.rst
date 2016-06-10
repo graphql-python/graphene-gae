@@ -3,7 +3,7 @@
 History
 -------
 
-0.1.6 (TBD)
+0.1.6 (2016-06-10)
 ---------------------
 * Changing development status to Beta
 * Added NdbNode.global_id_to_key [PR #15](https://github.com/graphql-python/graphene-gae/pull/15)
