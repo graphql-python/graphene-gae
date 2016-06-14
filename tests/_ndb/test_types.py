@@ -1,3 +1,4 @@
+from graphene_gae.ndb.fields import NdbKeyStringField
 from graphql_relay import to_global_id
 from tests.base_test import BaseTest
 
@@ -101,6 +102,27 @@ class TestNDBTypes(BaseTest):
 
             schema = graphene.Schema(query=QueryType)
             schema.execute('query test {  articles { prop } }')
+
+        self.assertIn("Model 'bar' is not accessible by the schema.", str(context.exception.message))
+
+    def testNdbObjectType_keyProperty_stringRepresentation_kindDoesntExist_raisesException(self):
+        with self.assertRaises(Exception) as context:
+            class ArticleType(NdbObjectType):
+                class Meta:
+                    model = Article
+                    only_fields = ('prop',)
+
+                prop = NdbKeyStringField('foo', 'bar')
+
+            class QueryType(graphene.ObjectType):
+                articles = graphene.List(ArticleType)
+
+                @graphene.resolve_only_args
+                def resolve_articles(self):
+                    return Article.query()
+
+            schema = graphene.Schema(query=QueryType)
+            result = schema.execute('query test {  articles { prop } }')
 
         self.assertIn("Model 'bar' is not accessible by the schema.", str(context.exception.message))
 

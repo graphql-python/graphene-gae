@@ -90,7 +90,7 @@ def convert_ndb_key_propety(ndb_key_prop, meta):
         string_prop_name = singular_name + '_ids' if ndb_key_prop._repeated else singular_name + '_id'
         resolved_prop_name = name
 
-    string_field = NdbKeyStringField(name)
+    string_field = NdbKeyStringField(name, ndb_key_prop._kind)
     resolved_field = NdbKeyField(name, ndb_key_prop._kind)
 
     if ndb_key_prop._repeated:
