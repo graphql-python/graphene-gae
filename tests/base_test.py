@@ -61,7 +61,7 @@ class BaseTest(unittest.TestCase):
 
     # region Extra Assertions
     def assertEmpty(self, l, msg=None):
-        self.assertEqual(0, len(list(l)), msg=msg)
+        self.assertEqual(0, len(list(l)), msg=msg or str(l))
 
     def assertLength(self, l, expectation, msg=None):
         self.assertEqual(len(l), expectation, msg)

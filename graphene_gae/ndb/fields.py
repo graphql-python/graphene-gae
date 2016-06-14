@@ -5,6 +5,7 @@ from graphene import relay
 from graphene.core.exceptions import SkipField
 from graphene.core.types.base import FieldType
 from graphene.core.types.scalars import Boolean, Int, String
+from graphql_relay import to_global_id
 
 __author__ = 'ekampf'
 
@@ -90,22 +91,55 @@ class NdbConnectionField(relay.ConnectionField):
 
 
 class NdbKeyStringField(String):
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name, kind, *args, **kwargs):
         self.name = name
+        self.kind = kind
 
         if 'resolver' not in kwargs:
             kwargs['resolver'] = self.default_resolver
 
         super(NdbKeyStringField, self).__init__(*args, **kwargs)
 
+    def internal_type(self, schema):
+        _type = self.get_object_type(schema)
+        if not _type and self.parent._meta.only_fields:
+            raise Exception(
+                "Model %r is not accessible by the schema. "
+                "You can either register the type manually "
+                "using @schema.register. "
+                "Or disable the field in %s" % (
+                    self.kind,
+                    self.parent,
+                )
+            )
+
+        if not _type:
+            raise SkipField()
+
+        from graphql import GraphQLString
+        return GraphQLString
+
+    def get_object_type(self, schema):
+        for _type in schema.types.values():
+            type_model = hasattr(_type, '_meta') and getattr(_type._meta, 'model', None)
+            if not type_model:
+                continue
+
+            if self.kind == type_model or self.kind == type_model.__name__:
+                return _type
+
     def default_resolver(self, node, args, info):
         entity = node.instance
         key = getattr(entity, self.name)
+        if not key:
+            return None
 
         if isinstance(key, list):
-            return [k.urlsafe() for k in key]
+            t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
+            return [to_global_id(t, k.urlsafe()) for k in key]
 
-        return key.urlsafe() if key else None
+        t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
+        return to_global_id(t, key.urlsafe()) if key else None
 
 
 class NdbKeyField(FieldType):

@@ -83,7 +83,7 @@ class TestNDBConverter(BaseTest):
 
         self.assertLength(conversion, 2)
 
-        self.assertEqual(conversion[0].name, 'user_key')
+        self.assertEqual(conversion[0].name, 'user_id')
         self.assertIsInstance(conversion[0].field, NdbKeyStringField)
 
         self.assertEqual(conversion[1].name, 'user')
@@ -97,7 +97,7 @@ class TestNDBConverter(BaseTest):
 
         self.assertLength(conversion, 2)
 
-        self.assertEqual(conversion[0].name, 'user_keys')
+        self.assertEqual(conversion[0].name, 'user_ids')
         self.assertIsInstance(conversion[0].field, List)
         self.assertIsInstance(conversion[0].field.of_type, NdbKeyStringField)
 
@@ -113,7 +113,7 @@ class TestNDBConverter(BaseTest):
 
         self.assertLength(conversion, 2)
 
-        self.assertEqual(conversion[0].name, 'user_key')
+        self.assertEqual(conversion[0].name, 'user_id')
         self.assertIsInstance(conversion[0].field, NonNull)
         self.assertIsInstance(conversion[0].field.of_type, NdbKeyStringField)
 
@@ -129,7 +129,7 @@ class TestNDBConverter(BaseTest):
 
         self.assertLength(conversion, 2)
 
-        self.assertEqual(conversion[0].name, 'user_key')
+        self.assertEqual(conversion[0].name, 'user_id')
         self.assertIsInstance(conversion[0].field, NdbKeyStringField)
 
         self.assertEqual(conversion[1].name, 'user')
