@@ -169,7 +169,7 @@ class TestNDBTypesRelay(BaseTest):
 
                 }
             }
-            """)
+        """)
 
         self.assertEmpty(result.errors)
 

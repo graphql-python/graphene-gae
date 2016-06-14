@@ -104,19 +104,6 @@ def convert_ndb_key_propety(ndb_key_prop, meta):
         resolve_key_field_result
     ]
 
-    # if remove_key_suffix:
-    #     if name.endswith('_key'):
-    #         name = name[:-4]
-    #
-    #     if name.endswith('_keys'):
-    #         name = name[:-5]
-    #         name = p.plural(name)
-    #
-    # field = NdbKeyField(ndb_key_prop._code_name, ndb_key_prop._kind)
-    # if ndb_key_prop._repeated:
-    #     field = field.List
-    #
-    # return ConversionResult(name=name, field=field)
 
 
 def convert_local_structured_property(ndb_structured_prop, meta):
