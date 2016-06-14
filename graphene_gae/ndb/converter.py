@@ -17,6 +17,11 @@ ConversionResult = namedtuple('ConversionResult', ['name', 'field'])
 p = inflect.engine()
 
 
+def rreplace(s, old, new, occurrence):
+    li = s.rsplit(old, occurrence)
+    return new.join(li)
+
+
 def convert_ndb_scalar_property(graphene_type, ndb_prop, **kwargs):
     description = "%s %s property" % (ndb_prop._name, graphene_type)
     result = graphene_type(description=description, **kwargs)
@@ -61,7 +66,7 @@ def convert_ndb_key_propety(ndb_key_prop, meta):
             store_key = ndb.KeyProperty(...)
 
         Result is 2 fields:
-            store_key = graphene.String() -> resolves to store_key.urlsafe()
+            store_id  = graphene.String() -> resolves to store_key.urlsafe()
             store     = NdbKeyField()     -> resolves to entity
 
     #2.
@@ -69,7 +74,7 @@ def convert_ndb_key_propety(ndb_key_prop, meta):
             store = ndb.KeyProperty(...)
 
         Result is 2 fields:
-            store_key = graphene.String() -> resolves to store_key.urlsafe()
+            store_id = graphene.String() -> resolves to store_key.urlsafe()
             store     = NdbKeyField()     -> resolves to entity
 
     """
@@ -77,12 +82,12 @@ def convert_ndb_key_propety(ndb_key_prop, meta):
 
     if name.endswith('_key') or name.endswith('_keys'):
         # Case #1 - name is of form 'store_key' or 'store_keys'
-        string_prop_name = name
+        string_prop_name = rreplace(name, '_key', '_id', 1)
         resolved_prop_name = name[:-4] if name.endswith('_key') else p.plural(name[:-5])
     else:
         # Case #2 - name is of form 'store'
         singular_name = p.singular_noun(name) if p.singular_noun(name) else name
-        string_prop_name = singular_name + '_keys' if ndb_key_prop._repeated else singular_name + '_key'
+        string_prop_name = singular_name + '_ids' if ndb_key_prop._repeated else singular_name + '_id'
         resolved_prop_name = name
 
     string_field = NdbKeyStringField(name)
@@ -103,7 +108,6 @@ def convert_ndb_key_propety(ndb_key_prop, meta):
         string_key_field_result,
         resolve_key_field_result
     ]
-
 
 
 def convert_local_structured_property(ndb_structured_prop, meta):
