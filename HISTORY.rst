@@ -3,9 +3,9 @@
 History
 -------
 
-0.1.7 (TBD)
+0.1.7 (2016-06-14)
 ---------------------
-
+* BREAKING: Fixed behavior of KeyProperty to expose GraphQL Global IDs instead of internal ndb.Key values. ([PR #16](https://github.com/graphql-python/graphene-gae/pull/16))
 
 0.1.6 (2016-06-10)
 ---------------------
