@@ -5,6 +5,7 @@ from graphene import relay
 from graphene.core.exceptions import SkipField
 from graphene.core.types.base import FieldType
 from graphene.core.types.scalars import Boolean, Int, String
+from graphql_relay import to_global_id
 
 __author__ = 'ekampf'
 
@@ -101,11 +102,42 @@ class NdbKeyStringField(String):
     def default_resolver(self, node, args, info):
         entity = node.instance
         key = getattr(entity, self.name)
+        if not key:
+            return None
 
         if isinstance(key, list):
-            return [k.urlsafe() for k in key]
+            t = self.__get_key_internal_type(key[0], info.schema.graphene_schema)
+            return [to_global_id(t.name, k.urlsafe()) for k in key]
 
-        return key.urlsafe() if key else None
+        t = self.__get_key_internal_type(key, info.schema.graphene_schema)
+        return to_global_id(t.name, key.urlsafe()) if key else None
+
+    def __get_key_internal_type(self, key, schema):
+        _type = self.__find_key_object_type(key, schema)
+        if not _type and self.parent._meta.only_fields:
+            raise Exception(
+                "Model %r is not accessible by the schema. "
+                "You can either register the type manually "
+                "using @schema.register. "
+                "Or disable the field in %s" % (
+                    key.kind(),
+                    self.parent,
+                )
+            )
+
+        if not _type:
+            raise SkipField()
+
+        return schema.T(_type)
+
+    def __find_key_object_type(self, key, schema):
+        for _type in schema.types.values():
+            type_model = hasattr(_type, '_meta') and getattr(_type._meta, 'model', None)
+            if not type_model:
+                continue
+
+            if key.kind() == type_model or key.kind() == type_model.__name__:
+                return _type
 
 
 class NdbKeyField(FieldType):

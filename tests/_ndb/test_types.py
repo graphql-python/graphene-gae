@@ -1,3 +1,4 @@
+from graphql_relay import to_global_id
 from tests.base_test import BaseTest
 
 import graphene
@@ -280,7 +281,7 @@ class TestNDBTypes(BaseTest):
             query ArticleWithAuthorID {
                 articles {
                     headline
-                    authorKey
+                    authorId
                     author {
                         name, email
                     }
@@ -293,7 +294,8 @@ class TestNDBTypes(BaseTest):
         article = dict(result.data['articles'][0])
         author = dict(article['author'])
         self.assertDictEqual(author, {'name': u'john dow', 'email': u'john@dow.com'})
-        self.assertDictContainsSubset(dict(headline='h1', authorKey=author_key.urlsafe()), article)
+        self.assertEqual('h1', article['headline'])
+        self.assertEqual(to_global_id('AuthorType', author_key.urlsafe()), article['authorId'])
 
     def testQuery_repeatedKeyProperty(self):
         tk1 = Tag(name="t1").put()
@@ -302,14 +304,12 @@ class TestNDBTypes(BaseTest):
         tk4 = Tag(name="t4").put()
         Article(headline="h1", summary="s1", tags=[tk1, tk2, tk3, tk4]).put()
 
-        print str(schema)
-
         result = schema.execute('''
             query ArticleWithAuthorID {
                 articles {
                     headline
-                    authorKey
-                    tagKeys
+                    authorId
+                    tagIds
                     tags {
                         name
                     }
@@ -320,7 +320,7 @@ class TestNDBTypes(BaseTest):
         self.assertEmpty(result.errors)
 
         article = dict(result.data['articles'][0])
-        self.assertListEqual(map(lambda k: k.urlsafe(), [tk1, tk2, tk3, tk4]), article['tagKeys'])
+        self.assertListEqual(map(lambda k: to_global_id('TagType', k.urlsafe()), [tk1, tk2, tk3, tk4]), article['tagIds'])
 
         self.assertLength(article['tags'], 4)
         for i in range(0, 3):

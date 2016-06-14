@@ -3,6 +3,10 @@
 History
 -------
 
+0.1.7 (TBD)
+---------------------
+
+
 0.1.6 (2016-06-10)
 ---------------------
 * Changing development status to Beta
