@@ -3,6 +3,11 @@
 History
 -------
 
+0.1.8 (2016-08-16)
+---------------------
+* Made connection_from_ndb_query resilient to random ndb timeouts
+
+
 0.1.7 (2016-06-14)
 ---------------------
 * BREAKING: Fixed behavior of KeyProperty to expose GraphQL Global IDs instead of internal ndb.Key values. ([PR #16](https://github.com/graphql-python/graphene-gae/pull/16))

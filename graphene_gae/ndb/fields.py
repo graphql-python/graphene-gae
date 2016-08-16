@@ -1,5 +1,5 @@
 from google.appengine.ext import ndb
-from google.appengine.ext.db import BadArgumentError
+from google.appengine.ext.db import BadArgumentError, Timeout
 
 from graphene import relay
 from graphene.core.exceptions import SkipField
@@ -31,24 +31,31 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
     page_size = first if first else full_args.get('page_size', 20)
     start_cursor = ndb.Cursor(urlsafe=after) if after else None
 
-    iter = query.iter(produce_cursors=True, start_cursor=start_cursor, batch_size=batch_size, keys_only=keys_only, projection=query.projection)
+    ndb_iter = query.iter(produce_cursors=True, start_cursor=start_cursor, batch_size=batch_size, keys_only=keys_only, projection=query.projection)
 
+    timeouts = 0
     edges = []
     while len(edges) < page_size:
         try:
-            entity = iter.next()
+            entity = ndb_iter.next()
         except StopIteration:
             break
+        except Timeout:
+            timeouts += 1
+            if timeouts > 2:
+                break
+
+            continue
 
         if keys_only:
             # entity is actualy an ndb.Key and we need to create an empty entity to hold it
             entity = edge_type.node_type._meta.model(key=entity)
 
-        edge = edge_type(node=entity, cursor=iter.cursor_after().urlsafe())
+        edge = edge_type(node=entity, cursor=ndb_iter.cursor_after().urlsafe())
         edges.append(edge)
 
     try:
-        end_cursor = iter.cursor_after().urlsafe()
+        end_cursor = ndb_iter.cursor_after().urlsafe()
     except BadArgumentError:
         end_cursor = None
 
@@ -59,7 +66,7 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
             start_cursor=start_cursor.urlsafe() if start_cursor else '',
             end_cursor=end_cursor,
             has_previous_page=has_previous_page,
-            has_next_page=iter.has_next()
+            has_next_page=ndb_iter.has_next()
         )
     )
 
