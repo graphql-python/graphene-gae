@@ -7,5 +7,5 @@ coverage
 flake8
 Sphinx
 
-graphene
+graphene~=0.10.2
 PyYAML==3.11
