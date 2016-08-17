@@ -1,7 +1,8 @@
 import inspect
 import six
 
-from graphene import relay
+from graphql.type import GraphQLString
+from graphene import relay, Field
 from graphene.core.classtypes.objecttype import ObjectType, ObjectTypeMeta
 
 from google.appengine.ext import ndb
@@ -38,6 +39,12 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
 
             for r in conversion_results:
                 cls.add_to_class(r.name, r.field)
+
+        cls.add_to_class("ndb_id",
+                         Field(GraphQLString,
+                               description="ndb internal id. (key.id())",
+                               resolver=lambda self, *args, **kwargs: self.key.id())
+                         )
 
     def construct(cls, *args, **kwargs):
         super(NdbObjectTypeMeta, cls).construct(*args, **kwargs)
