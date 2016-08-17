@@ -3,8 +3,9 @@
 History
 -------
 
-0.1.9 (TBD)
+0.1.9 (2016-08-17)
 ---------------------
+* Each NdbObject now exposes an `ndbId` String field that maps to the entity's `key.id()`
 * Added ndb boolean argument to NdbKeyStringField so now when looking at KeyProperty we can fetch either global GraphQL id or the NDB internal id.
 
 
