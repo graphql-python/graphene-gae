@@ -297,13 +297,15 @@ class TestNDBTypes(BaseTest):
 
     def testQuery_keyProperty(self):
         author_key = Author(name="john dow", email="john@dow.com").put()
-        Article(headline="h1", summary="s1", author_key=author_key).put()
+        article_key = Article(headline="h1", summary="s1", author_key=author_key).put()
 
         result = schema.execute('''
             query ArticleWithAuthorID {
                 articles {
+                    ndbId
                     headline
                     authorId
+                    authorNdbId: authorId(ndb: true)
                     author {
                         name, email
                     }
@@ -314,6 +316,9 @@ class TestNDBTypes(BaseTest):
         self.assertEmpty(result.errors)
 
         article = dict(result.data['articles'][0])
+        self.assertEqual(article['ndbId'], str(article_key.id()))
+        self.assertEqual(article['authorNdbId'], str(author_key.id()))
+
         author = dict(article['author'])
         self.assertDictEqual(author, {'name': u'john dow', 'email': u'john@dow.com'})
         self.assertEqual('h1', article['headline'])
