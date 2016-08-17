@@ -110,7 +110,6 @@ class NdbKeyStringField(String):
                                      description="Return an NDB id (key.id()) instead of a GraphQL global id",
                                      default=False)
 
-
         super(NdbKeyStringField, self).__init__(*args, **kwargs)
 
     def internal_type(self, schema):
