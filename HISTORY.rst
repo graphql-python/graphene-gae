@@ -3,6 +3,11 @@
 History
 -------
 
+0.1.9 (TBD)
+---------------------
+* Added ndb boolean argument to NdbKeyStringField so now when looking at KeyProperty we can fetch either global GraphQL id or the NDB internal id.
+
+
 0.1.8 (2016-08-16)
 ---------------------
 * Made connection_from_ndb_query resilient to random ndb timeouts

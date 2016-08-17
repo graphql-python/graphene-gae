@@ -304,6 +304,7 @@ class TestNDBTypes(BaseTest):
                 articles {
                     headline
                     authorId
+                    authorNdbId: authorId(ndb: true)
                     author {
                         name, email
                     }
@@ -314,6 +315,8 @@ class TestNDBTypes(BaseTest):
         self.assertEmpty(result.errors)
 
         article = dict(result.data['articles'][0])
+        self.assertEqual(article['authorNdbId'], author_key.id())
+
         author = dict(article['author'])
         self.assertDictEqual(author, {'name': u'john dow', 'email': u'john@dow.com'})
         self.assertEqual('h1', article['headline'])

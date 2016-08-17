@@ -1,7 +1,7 @@
 from google.appengine.ext import ndb
 from google.appengine.ext.db import BadArgumentError, Timeout
 
-from graphene import relay
+from graphene import relay, Argument
 from graphene.core.exceptions import SkipField
 from graphene.core.types.base import FieldType
 from graphene.core.types.scalars import Boolean, Int, String
@@ -105,6 +105,12 @@ class NdbKeyStringField(String):
         if 'resolver' not in kwargs:
             kwargs['resolver'] = self.default_resolver
 
+        if 'ndb' not in kwargs:
+            kwargs['ndb'] = Argument(Boolean(),
+                                     description="Return an NDB id (key.id()) instead of a GraphQL global id",
+                                     default=False)
+
+
         super(NdbKeyStringField, self).__init__(*args, **kwargs)
 
     def internal_type(self, schema):
@@ -141,12 +147,14 @@ class NdbKeyStringField(String):
         if not key:
             return None
 
+        is_global_id = not args.get('ndb', False)
+
         if isinstance(key, list):
             t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
-            return [to_global_id(t, k.urlsafe()) for k in key]
+            return [to_global_id(t, k.urlsafe()) for k in key] if is_global_id else [k.id() for k in key]
 
         t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
-        return to_global_id(t, key.urlsafe()) if key else None
+        return to_global_id(t, key.urlsafe()) if is_global_id else key.id()
 
 
 class NdbKeyField(FieldType):
