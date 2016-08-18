@@ -45,7 +45,7 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'six>=1.10.0',
-    'graphene~=0.10.2',
+    'git+https://github.com/graphql-python/graphene@master',
     'inflect==0.2.5'
 ]
 
