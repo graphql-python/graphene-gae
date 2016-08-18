@@ -71,7 +71,7 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
     )
 
 
-class NdbConnection(relay.types.Connection):
+class NdbConnection(relay.Connection):
     @classmethod
     def from_list(cls, ndb_query, args, context, info):
         connection = connection_from_ndb_query(ndb_query, args, connection_type=cls, edge_type=cls.edge_type, pageinfo_type=relay.PageInfo)
