@@ -52,13 +52,13 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
         new_cls = ObjectTypeMeta.__new__(mcs, name, bases, dict(attrs, _meta=options))
         mcs.register(new_cls)
 
-        options.sqlalchemy_fields = yank_fields_from_attrs(
+        options.ndb_fields = yank_fields_from_attrs(
             mcs.fields_for_ndb_model(options),
             _as=Field,
         )
         options.fields = merge(
             options.interface_fields,
-            options.sqlalchemy_fields,
+            options.ndb_fields,
             options.base_fields,
             options.local_fields
         )
