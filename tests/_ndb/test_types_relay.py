@@ -1,3 +1,5 @@
+from graphene import resolve_only_args
+
 from tests.base_test import BaseTest
 
 from google.appengine.ext import ndb
@@ -52,7 +54,8 @@ class ArticleType(NdbObjectType):
 
     comments = NdbConnectionField(CommentType)
 
-    def resolve_comments(self, args, info):
+    @resolve_only_args
+    def resolve_comments(self):
         return Comment.query(ancestor=self.key)
 
 
@@ -88,7 +91,6 @@ class TestNDBTypesRelay(BaseTest):
         self.assertEqual(result.headline, article.headline)
         self.assertEqual(result.summary, article.summary)
         # self.assertEqual(result.author_key, article_key.author_key)  # TODO
-
 
     def testNdbNode_globalIdToKey_returnsNdbKey(self):
         article_key = Article(
@@ -202,9 +204,11 @@ class TestNDBTypesRelay(BaseTest):
         Comment(parent=a2, body="c2").put()
         Comment(parent=a3, body="c3").put()
 
+        print str(schema)
+
         result = schema.execute("""
             query Articles {
-                articles(keysOnly: true) {
+                articles(keys_only: true) {
                     edges {
                         cursor,
                         node {

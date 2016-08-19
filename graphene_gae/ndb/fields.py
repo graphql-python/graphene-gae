@@ -1,8 +1,12 @@
 from functools import partial
+
+
 from google.appengine.ext import ndb
 from google.appengine.ext.db import BadArgumentError, Timeout
 
+from graphql_relay.connection.connectiontypes import PageInfo, Edge
 from graphene import relay, Argument, Boolean, Int, String, Field, Dynamic
+from graphene.relay.connection import PageInfo
 
 __author__ = 'ekampf'
 
@@ -16,8 +20,8 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
     so pagination will only work if the array is static.
     '''
     connection_type = connection_type or relay.Connection
-    edge_type = edge_type or relay.Edge
-    pageinfo_type = pageinfo_type or relay.PageInfo
+    edge_type = edge_type or Edge
+    pageinfo_type = pageinfo_type or PageInfo
 
     full_args = dict(args, **kwargs)
     first = full_args.get('first')
@@ -46,7 +50,7 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
 
         if keys_only:
             # entity is actualy an ndb.Key and we need to create an empty entity to hold it
-            entity = edge_type.node_type._meta.model(key=entity)
+            entity = edge_type._meta.fields['node']._type._meta.model(key=entity)
 
         edge = edge_type(node=entity, cursor=ndb_iter.cursor_after().urlsafe())
         edges.append(edge)
@@ -69,6 +73,16 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
 
 
 class NdbConnectionField(relay.ConnectionField):
+    def __init__(self, type, *args, **kwargs):
+        super(NdbConnectionField, self).__init__(
+            type,
+            *args,
+            keys_only=Boolean(),
+            batch_size=Int(),
+            page_size=Int(),
+            **kwargs
+        )
+
     @property
     def model(self):
         return self.type._meta.node._meta.model
@@ -83,8 +97,8 @@ class NdbConnectionField(relay.ConnectionField):
             ndb_query,
             args=args,
             connection_type=connection,
-            egde_type=connection.Edge,
-            pageinfo_type=connection.PageInfo
+            edge_type=connection.Edge,
+            pageinfo_type=PageInfo
         )
 
     def get_resolver(self, parent_resolver):
