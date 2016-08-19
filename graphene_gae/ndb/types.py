@@ -116,10 +116,14 @@ class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, ObjectType)):
         return type(root) == cls._meta.model
 
     @classmethod
-    def get_node(cls, urlsafe_key, context, info):
+    def get_node(cls, urlsafe_key, *_):
         model = cls._meta.model
-        key = ndb.Key(urlsafe=urlsafe_key)
-        assert key.kind() == model
+        try:
+            key = ndb.Key(urlsafe=urlsafe_key)
+        except:
+            return None
+
+        assert key.kind() == model.__name__
         return key.get()
 
     def resolve_id(root, args, context, info):

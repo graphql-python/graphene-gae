@@ -82,8 +82,13 @@ class TestNDBTypesRelay(BaseTest):
         ).put()
 
         result = ArticleType.get_node(article_key.urlsafe())
+        article = article_key.get()
+
         self.assertIsNotNone(result)
-        self.assertEqual(result.instance, article_key.get())
+        self.assertEqual(result.headline, article.headline)
+        self.assertEqual(result.summary, article.summary)
+        # self.assertEqual(result.author_key, article_key.author_key)  # TODO
+
 
     def testNdbNode_globalIdToKey_returnsNdbKey(self):
         article_key = Article(
