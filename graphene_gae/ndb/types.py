@@ -44,7 +44,6 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
             local_fields=None,
             only_fields=(),
             exclude_fields=(),
-            id='id',
             interfaces=(),
             registry=None
         )
@@ -126,12 +125,9 @@ class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, ObjectType)):
         assert key.kind() == model.__name__
         return key.get()
 
+    @staticmethod
     def resolve_id(root, args, context, info):
-        graphene_type = info.parent_type.graphene_type
-        if is_node(graphene_type):
-            return root.__mapper__.primary_key_from_instance(root)[0]
-
-        return getattr(root, graphene_type._meta.id, None)
+        return root.key.urlsafe()
 
     @staticmethod
     def is_valid_ndb_model(model):
