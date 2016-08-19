@@ -1,122 +1,131 @@
 import inspect
 import six
+from collections import OrderedDict
 
-from graphql.type import GraphQLString
-from graphene import relay, Field
-from graphene.core.classtypes.objecttype import ObjectType, ObjectTypeMeta
+from graphene.types.structures import Structure
 
 from google.appengine.ext import ndb
-from graphql_relay import from_global_id
 
-from .options import NdbOptions
+from graphene import ObjectType, Field, NonNull
+from graphene.types.objecttype import ObjectTypeMeta, merge, yank_fields_from_attrs
+from graphene.utils.is_base_type import is_base_type
+from graphene.types.options import Options
+from graphene.relay import is_node
+
+from graphene_gae.ndb.converter import convert_ndb_property
 
 __author__ = 'ekampf'
 
 
+class Registry(object):
+    REGISTRY = {}
+
+    def register(self, cls):
+        # TODO: add checks that cls is of the right type
+        self.REGISTRY[cls._meta.model] = cls
+
+    @classmethod
+    def get_type_for_model(cls, model):
+        return cls.REGISTRY.get(model)
+
+
 class NdbObjectTypeMeta(ObjectTypeMeta):
-    options_class = NdbOptions
+    REGISTRY = {}
 
-    def construct_fields(cls):
-        from .converter import convert_ndb_property
+    def __new__(mcs, name, bases, attrs):
+        if not is_base_type(bases, NdbObjectTypeMeta):
+            return type.__new__(mcs, name, bases, attrs)
 
-        ndb_model = cls._meta.model
+        options = Options(
+            attrs.pop('Meta', None),
+            name=name,
+            description=attrs.pop('__doc__', None),
+            model=None,
+            local_fields=None,
+            only_fields=(),
+            exclude_fields=(),
+            id='id',
+            interfaces=(),
+            registry=None
+        )
 
-        only_fields = cls._meta.only_fields
-        already_created_fields = {field.attname for field in cls._meta.local_fields}
+        new_cls = ObjectTypeMeta.__new__(mcs, name, bases, dict(attrs, _meta=options))
+        mcs.register(new_cls)
 
+        options.sqlalchemy_fields = yank_fields_from_attrs(
+            mcs.fields_for_ndb_model(options),
+            _as=Field,
+        )
+        options.fields = merge(
+            options.interface_fields,
+            options.sqlalchemy_fields,
+            options.base_fields,
+            options.local_fields
+        )
+
+        return new_cls
+
+    @classmethod
+    def register(mcs, object_type_meta):
+        mcs.REGISTRY[object_type_meta._meta.model] = object_type_meta
+
+    @staticmethod
+    def fields_for_ndb_model(options):
+        ndb_model = options.model
+        only_fields = options.only_fields
+        already_created_fields = {name for name, _ in options.local_fields.iteritems()}
+
+        ndb_fields = OrderedDict()
         for prop_name, prop in ndb_model._properties.iteritems():
             name = prop._code_name
 
             is_not_in_only = only_fields and name not in only_fields
-            is_already_created = name in already_created_fields
-            is_excluded = name in cls._meta.exclude_fields or is_already_created
+            is_excluded = name in options.exclude_fields or name in already_created_fields
             if is_not_in_only or is_excluded:
                 continue
 
-            conversion_results = convert_ndb_property(prop, cls._meta)
-            if not isinstance(conversion_results, list):
-                conversion_results = [conversion_results]
+            fields = convert_ndb_property(prop)
+            if not fields:
+                continue
 
-            for r in conversion_results:
-                cls.add_to_class(r.name, r.field)
+            if not isinstance(fields, list):
+                fields = [fields]
 
-        cls.add_to_class("ndb_id",
-                         Field(GraphQLString,
-                               description="ndb internal id. (key.id())",
-                               resolver=lambda self, *args, **kwargs: self.key.id())
-                         )
+            for f in fields:
+                if isinstance(f, Structure):
+                    ndb_fields[f.of_type._meta.name] = f
+                else:
+                    ndb_fields[f._meta.name] = f
 
-    def construct(cls, *args, **kwargs):
-        super(NdbObjectTypeMeta, cls).construct(*args, **kwargs)
-        if not cls._meta.abstract:
-            if not cls._meta.model:
-                raise Exception('NdbObjectType %s must have a model in the Meta class attr' % cls)
-
-            if not inspect.isclass(cls._meta.model) or not issubclass(cls._meta.model, ndb.Model):
-                raise Exception('Provided model in %s is not an NDB model' % cls)
-
-            cls.construct_fields()
-        return cls
+        return ndb_fields
 
 
-class InstanceObjectType(ObjectType):
-    class Meta:
-        abstract = True
+class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, ObjectType)):
+    @classmethod
+    def is_type_of(cls, root, context, info):
+        if isinstance(root, cls):
+            return True
 
-    def __init__(self, _root=None):
-        super(InstanceObjectType, self).__init__(_root=_root)
-        assert not self._root or isinstance(self._root, self._meta.model), (
-            '{} received a non-compatible instance ({}) '
-            'when expecting {}'.format(
-                self.__class__.__name__,
-                self._root.__class__.__name__,
-                self._meta.model.__name__
-            ))
+        if not cls.is_valid_ndb_model(type(root)):
+            raise Exception(('Received incompatible instance "{}".').format(root))
 
-    @property
-    def instance(self):
-        return self._root
-
-    @instance.setter
-    def instance(self, value):
-        self._root = value
-
-
-class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, InstanceObjectType)):
-    class Meta:
-        abstract = True
-
-
-class NdbNodeMeta(NdbObjectTypeMeta, relay.types.NodeMeta):
-    pass
-
-
-class NdbNodeInstance(relay.types.Node, InstanceObjectType):
-    class Meta:
-        abstract = True
-
-
-class NdbNode(six.with_metaclass(NdbNodeMeta, NdbNodeInstance)):
-    class Meta:
-        abstract = True
-
-    def to_global_id(self):
-        entity_id = self.key.urlsafe() if self.key else None
-        return self.global_id(entity_id)
+        return type(root) == cls._meta.model
 
     @classmethod
-    def global_id_to_key(cls, global_id):
-        _, urlsafe_key = from_global_id(global_id)
-        return ndb.Key(urlsafe=urlsafe_key)
+    def get_node(cls, urlsafe_key, context, info):
+        model = cls._meta.model
+        key = ndb.Key(urlsafe=urlsafe_key)
+        assert key.kind() == model
+        return key.get()
 
-    @classmethod
-    def get_node(cls, urlsafe_key, info=None):
-        try:
-            key = ndb.Key(urlsafe=urlsafe_key)
-            instance = key.get()
-            if not instance:
-                return None
+    def resolve_id(root, args, context, info):
+        graphene_type = info.parent_type.graphene_type
+        if is_node(graphene_type):
+            return root.__mapper__.primary_key_from_instance(root)[0]
 
-            return cls(instance)
-        except:
-            return None
+        return getattr(root, graphene_type._meta.id, None)
+
+    @staticmethod
+    def is_valid_ndb_model(model):
+        return inspect.isclass(model) and issubclass(model, ndb.Model)
+

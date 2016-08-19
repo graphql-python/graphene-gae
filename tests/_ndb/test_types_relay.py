@@ -3,50 +3,52 @@ from tests.base_test import BaseTest
 from google.appengine.ext import ndb
 
 import graphene
-from graphene_gae import NdbNode, NdbConnectionField
+from graphene.relay import Node
+from graphene_gae import NdbObjectType
+from graphene_gae.ndb.fields import NdbConnectionField
 
 from tests.models import Tag, Comment, Article, Author, Address, PhoneNumber
 
 __author__ = 'ekampf'
 
 
-schema = graphene.Schema()
 
-
-@schema.register
-class AddressType(NdbNode):
+class AddressType(NdbObjectType):
     class Meta:
         model = Address
+        interfaces = (Node,)
 
 
-@schema.register
-class PhoneNumberType(NdbNode):
+class PhoneNumberType(NdbObjectType):
     class Meta:
         model = PhoneNumber
+        interfaces = (Node,)
 
 
-@schema.register
-class AuthorType(NdbNode):
+class AuthorType(NdbObjectType):
     class Meta:
         model = Author
+        interfaces = (Node,)
+        only_fields = ("name", "email")
 
 
-@schema.register
-class TagType(NdbNode):
+class TagType(NdbObjectType):
     class Meta:
         model = Tag
+        interfaces = (Node,)
 
 
-@schema.register
-class CommentType(NdbNode):
+class CommentType(NdbObjectType):
     class Meta:
         model = Comment
+        interfaces = (Node,)
 
 
-@schema.register
-class ArticleType(NdbNode):
+class ArticleType(NdbObjectType):
     class Meta:
         model = Article
+        interfaces = (Node,)
+        exclude_fields = ("author_key", "tags")
 
     comments = NdbConnectionField(CommentType)
 
@@ -58,7 +60,7 @@ class QueryRoot(graphene.ObjectType):
     articles = NdbConnectionField(ArticleType)
 
 
-schema.query = QueryRoot
+schema = graphene.Schema(query=QueryRoot)
 
 
 class TestNDBTypesRelay(BaseTest):
@@ -91,7 +93,7 @@ class TestNDBTypesRelay(BaseTest):
         ).put()
 
         node = ArticleType.get_node(article_key.urlsafe())
-        self.assertEqual(NdbNode.global_id_to_key(node.to_global_id()), article_key)
+        self.assertEqual(NdbObjectType.global_id_to_key(node.to_global_id()), article_key)
 
     def test_keyProperty(self):
         Article(

@@ -2,22 +2,22 @@
 
 from .ndb.types import (
     NdbObjectType,
-    NdbNode,
+    # NdbNode,
 )
 
-from .ndb.fields import (
-    NdbConnection,
-    NdbConnectionField,
-    NdbKeyField
-)
+# from .ndb.fields import (
+    # NdbConnection,
+    # NdbConnectionField,
+    # NdbKeyField
+# )
 
 __author__ = 'Eran Kampf'
 __version__ = '0.1.9'
 
 __all__ = [
     NdbObjectType,
-    NdbNode,
-    NdbConnection,
-    NdbConnectionField,
-    NdbKeyField
+    # NdbNode,
+    # NdbConnection,
+    # NdbConnectionField,
+    # NdbKeyField
 ]

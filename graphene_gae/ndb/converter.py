@@ -6,7 +6,7 @@ from google.appengine.ext import ndb
 from graphene import String, Boolean, Int, Float, List, NonNull, Field
 from graphene.types.json import JSONString
 from graphene.types.datetime import DateTime
-# from graphene_gae.ndb.fields import NdbKeyField, NdbKeyStringField
+# from graphene_gae.ndb.fields import NdbKeyStringField #, NdbKeyField
 
 __author__ = 'ekampf'
 
@@ -20,14 +20,18 @@ def rreplace(s, old, new, occurrence):
 
 def convert_ndb_scalar_property(graphene_type, ndb_prop, **kwargs):
     description = "%s %s property" % (ndb_prop._name, graphene_type)
-    result = graphene_type(description=description, **kwargs)
+    if not ndb_prop._repeated and not ndb_prop._required:
+        return graphene_type(description=description, **kwargs)
+
     if ndb_prop._repeated:
-        result = List(result)
+        result = List(graphene_type, description=description, **kwargs)
 
-    if ndb_prop._required:
-        result = NonNull(result)
+        if ndb_prop._required:
+            result = NonNull(result)
 
-    return result
+        return result
+
+    return NonNull(graphene_type, description=description, **kwargs)
 
 
 def convert_ndb_string_property(ndb_prop):
@@ -53,7 +57,7 @@ def convert_ndb_json_property(ndb_prop):
 def convert_ndb_datetime_property(ndb_prop):
     return DateTime(description=ndb_prop._name)
 
-
+#
 # def convert_ndb_key_propety(ndb_key_prop):
 #     """
 #     Two conventions for handling KeyProperties:
@@ -87,34 +91,34 @@ def convert_ndb_datetime_property(ndb_prop):
 #         resolved_prop_name = name
 #
 #     string_field = NdbKeyStringField(name, ndb_key_prop._kind)
-#     resolved_field = NdbKeyField(name, ndb_key_prop._kind)
+#     # resolved_field = NdbKeyField(name, ndb_key_prop._kind)
 #
 #     if ndb_key_prop._repeated:
 #         string_field = string_field.List
-#         resolved_field = resolved_field.List
+#         # resolved_field = resolved_field.List
 #
 #     if ndb_key_prop._required:
 #         string_field = string_field.NonNull
-#         resolved_field = resolved_field.NonNull
+#         # resolved_field = resolved_field.NonNull
 #
 #     return [
 #         string_field,
-#         resolved_field
+#         # resolved_field
 #     ]
+
+
+# def convert_local_structured_property(ndb_structured_prop):
+#     is_required = ndb_structured_prop._required
+#     is_repeated = ndb_structured_prop._repeated
+#     model = ndb_structured_prop._modelclass
+#     name = ndb_structured_prop._code_name
 #
-
-def convert_local_structured_property(ndb_structured_prop):
-    is_required = ndb_structured_prop._required
-    is_repeated = ndb_structured_prop._repeated
-    model = ndb_structured_prop._modelclass
-    name = ndb_structured_prop._code_name
-
-    t = LazyType(model.__name__ + 'Type')
-    if is_repeated:
-        l = List(t)
-        return ConversionResult(name=name, field=l.NonNull if is_required else l)
-
-    return ConversionResult(name=name, field=Field(t))
+#     t = LazyType(model.__name__ + 'Type')
+#     if is_repeated:
+#         l = List(t)
+#         return ConversionResult(name=name, field=l.NonNull if is_required else l)
+#
+#     return ConversionResult(name=name, field=Field(t))
 
 
 def convert_computed_property(ndb_computed_prop):
@@ -131,7 +135,7 @@ converters = {
     ndb.DateProperty: convert_ndb_datetime_property,
     ndb.DateTimeProperty: convert_ndb_datetime_property,
     # ndb.KeyProperty: convert_ndb_key_propety,
-    ndb.LocalStructuredProperty: convert_local_structured_property,
+    # ndb.LocalStructuredProperty: convert_local_structured_property,
     ndb.ComputedProperty: convert_computed_property
 }
 
@@ -139,7 +143,8 @@ converters = {
 def convert_ndb_property(prop):
     converter_func = converters.get(type(prop))
     if not converter_func:
-        raise Exception("Don't know how to convert NDB field %s (%s)" % (prop._code_name, prop))
+        return None
+        # raise Exception("Don't know how to convert NDB field %s (%s)" % (prop._code_name, prop))
 
     field = converter_func(prop)
     if not field:

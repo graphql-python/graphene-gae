@@ -1,11 +1,8 @@
+from functools import partial
 from google.appengine.ext import ndb
 from google.appengine.ext.db import BadArgumentError, Timeout
 
-from graphene import relay, Argument
-from graphene.core.exceptions import SkipField
-from graphene.core.types.base import FieldType
-from graphene.core.types.scalars import Boolean, Int, String
-from graphql_relay import to_global_id
+from graphene import relay, Argument, Boolean, Int, String, Field, Dynamic
 
 __author__ = 'ekampf'
 
@@ -71,134 +68,133 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
     )
 
 
-class NdbConnection(relay.types.Connection):
-    @classmethod
-    def from_list(cls, ndb_query, args, context, info):
-        connection = connection_from_ndb_query(ndb_query, args, connection_type=cls, edge_type=cls.edge_type, pageinfo_type=relay.PageInfo)
-        connection.set_connection_data(ndb_query)
-        return connection
-
-
 class NdbConnectionField(relay.ConnectionField):
-    def __init__(self, type, **kwargs):
-        kwargs['connection_type'] = kwargs.pop('connection_type', NdbConnection)
-        super(NdbConnectionField, self).__init__(
-            type,
-            keys_only=Boolean(),
-            batch_size=Int(),
-            page_size=Int(),
-            **kwargs)
-
-        if not self.default:
-            self.default = self.model.query()
-
     @property
     def model(self):
-        return self.type._meta.model
+        return self.type._meta.node._meta.model
+
+    @staticmethod
+    def connection_resolver(resolver, connection, model, root, args, context, info):
+        ndb_query = resolver(root, args, context, info)
+        if ndb_query is None:
+            ndb_query = model.query()
+
+        return connection_from_ndb_query(
+            ndb_query,
+            args=args,
+            connection_type=connection,
+            egde_type=connection.Edge,
+            pageinfo_type=connection.PageInfo
+        )
+
+    def get_resolver(self, parent_resolver):
+        return partial(self.connection_resolver, parent_resolver, self.type, self.model)
 
 
-class NdbKeyStringField(String):
-    def __init__(self, name, kind, *args, **kwargs):
-        self.name = name
-        self.kind = kind
-
-        if 'resolver' not in kwargs:
-            kwargs['resolver'] = self.default_resolver
-
-        if 'ndb' not in kwargs:
-            kwargs['ndb'] = Argument(Boolean(),
-                                     description="Return an NDB id (key.id()) instead of a GraphQL global id",
-                                     default=False)
-
-        super(NdbKeyStringField, self).__init__(*args, **kwargs)
-
-    def internal_type(self, schema):
-        _type = self.get_object_type(schema)
-        if not _type and self.parent._meta.only_fields:
-            raise Exception(
-                "Model %r is not accessible by the schema. "
-                "You can either register the type manually "
-                "using @schema.register. "
-                "Or disable the field in %s" % (
-                    self.kind,
-                    self.parent,
-                )
-            )
-
-        if not _type:
-            raise SkipField()
-
-        from graphql import GraphQLString
-        return GraphQLString
-
-    def get_object_type(self, schema):
-        for _type in schema.types.values():
-            type_model = hasattr(_type, '_meta') and getattr(_type._meta, 'model', None)
-            if not type_model:
-                continue
-
-            if self.kind == type_model or self.kind == type_model.__name__:
-                return _type
-
-    def default_resolver(self, node, args, info):
-        entity = node.instance
-        key = getattr(entity, self.name)
-        if not key:
-            return None
-
-        is_global_id = not args.get('ndb', False)
-
-        if isinstance(key, list):
-            t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
-            return [to_global_id(t, k.urlsafe()) for k in key] if is_global_id else [k.id() for k in key]
-
-        t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
-        return to_global_id(t, key.urlsafe()) if is_global_id else key.id()
 
 
-class NdbKeyField(FieldType):
-    def __init__(self, name, kind, *args, **kwargs):
-        self.name = name
-        self.kind = kind
+# class NdbKeyStringField(Field):
+#     def __init__(self, name, kind, *args, **kwargs):
+#         self.name = name
+#         self.kind = kind
+#
+#         if 'resolver' not in kwargs:
+#             kwargs['resolver'] = self.default_resolver
+#
+#         if 'ndb' not in kwargs:
+#             kwargs['ndb'] = Argument(Boolean(),
+#                                      description="Return an NDB id (key.id()) instead of a GraphQL global id",
+#                                      default=False)
+#
+#         super(NdbKeyStringField, self).__init__(*args, **kwargs)
+#
+#     def internal_type(self, schema):
+#         _type = self.get_object_type(schema)
+#         if not _type and self.parent._meta.only_fields:
+#             raise Exception(
+#                 "Model %r is not accessible by the schema. "
+#                 "You can either register the type manually "
+#                 "using @schema.register. "
+#                 "Or disable the field in %s" % (
+#                     self.kind,
+#                     self.parent,
+#                 )
+#             )
+#
+#         if not _type:
+#             raise SkipField()
+#
+#         from graphql import GraphQLString
+#         return GraphQLString
+#
+#     def get_object_type(self, schema):
+#         for _type in schema.types.values():
+#             type_model = hasattr(_type, '_meta') and getattr(_type._meta, 'model', None)
+#             if not type_model:
+#                 continue
+#
+#             if self.kind == type_model or self.kind == type_model.__name__:
+#                 return _type
+#
+#     def default_resolver(self, node, args, info):
+#         entity = node.instance
+#         key = getattr(entity, self.name)
+#         if not key:
+#             return None
+#
+#         is_global_id = not args.get('ndb', False)
+#
+#         if isinstance(key, list):
+#             t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
+#             return [to_global_id(t, k.urlsafe()) for k in key] if is_global_id else [k.id() for k in key]
+#
+#         t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
+#         return to_global_id(t, key.urlsafe()) if is_global_id else key.id()
 
-        if 'resolver' not in kwargs:
-            kwargs['resolver'] = self.default_resolver
 
-        super(NdbKeyField, self).__init__(*args, **kwargs)
-
-    def internal_type(self, schema):
-        _type = self.get_object_type(schema)
-        if not _type and self.parent._meta.only_fields:
-            raise Exception(
-                "Model %r is not accessible by the schema. "
-                "You can either register the type manually "
-                "using @schema.register. "
-                "Or disable the field in %s" % (
-                    self.kind,
-                    self.parent,
-                )
-            )
-
-        if not _type:
-            raise SkipField()
-
-        return schema.T(_type)
-
-    def get_object_type(self, schema):
-        for _type in schema.types.values():
-            type_model = hasattr(_type, '_meta') and getattr(_type._meta, 'model', None)
-            if not type_model:
-                continue
-
-            if self.kind == type_model or self.kind == type_model.__name__:
-                return _type
-
-    def default_resolver(self, node, args, info):
-        entity = node.instance
-        key = getattr(entity, self.name)
-
-        if isinstance(key, list):
-            entities = ndb.get_multi(key)
-            return entities
-
-        return key.get()
+# class NdbKeyField(Field):
+#     def __init__(self, name, kind, *args, **kwargs):
+#         self.name = name
+#         self.kind = kind
+#
+#         if 'resolver' not in kwargs:
+#             kwargs['resolver'] = self.default_resolver
+#
+#         super(NdbKeyField, self).__init__(*args, **kwargs)
+#
+#     def internal_type(self, schema):
+#         _type = self.get_object_type(schema)
+#         if not _type and self.parent._meta.only_fields:
+#             raise Exception(
+#                 "Model %r is not accessible by the schema. "
+#                 "You can either register the type manually "
+#                 "using @schema.register. "
+#                 "Or disable the field in %s" % (
+#                     self.kind,
+#                     self.parent,
+#                 )
+#             )
+#
+#         if not _type:
+#             raise SkipField()
+#
+#         return schema.T(_type)
+#
+#     def get_object_type(self, schema):
+#         for _type in schema.types.values():
+#             type_model = hasattr(_type, '_meta') and getattr(_type._meta, 'model', None)
+#             if not type_model:
+#                 continue
+#
+#             if self.kind == type_model or self.kind == type_model.__name__:
+#                 return _type
+#
+#     def default_resolver(self, node, args, info):
+#         entity = node.instance
+#         key = getattr(entity, self.name)
+#
+#         if isinstance(key, list):
+#             entities = ndb.get_multi(key)
+#             return entities
+#
+#         return key.get()
