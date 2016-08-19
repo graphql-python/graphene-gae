@@ -49,6 +49,12 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
             registry=None
         )
 
+        if not options.model:
+            raise Exception('NdbObjectType %s must have a model in the Meta class attr' % name)
+
+        if not inspect.isclass(options.model) or not issubclass(options.model, ndb.Model):
+            raise Exception('Provided model in %s is not an NDB model' % name)
+
         new_cls = ObjectTypeMeta.__new__(mcs, name, bases, dict(attrs, _meta=options))
         mcs.register(new_cls)
 

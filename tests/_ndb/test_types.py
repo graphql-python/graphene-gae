@@ -55,9 +55,7 @@ class TestNDBTypes(BaseTest):
 
     def testNdbObjectType_instanciation(self):
         instance = Article(headline="test123")
-        h = ArticleType(instance)
-        self.assertEqual(h._root, instance)
-        self.assertEqual(instance.key, h.key)
+        h = ArticleType(**instance.to_dict(exclude=["tags", "author_key"]))
         self.assertEqual(instance.headline, h.headline)
 
     def testNdbObjectType_should_raise_if_no_model(self):
