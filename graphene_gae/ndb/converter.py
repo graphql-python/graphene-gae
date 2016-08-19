@@ -10,6 +10,9 @@ from graphene.types.datetime import DateTime
 
 __author__ = 'ekampf'
 
+ConversionResult = namedtuple('ConversionResult', ['name', 'field'])
+
+
 p = inflect.engine()
 
 
@@ -19,19 +22,16 @@ def rreplace(s, old, new, occurrence):
 
 
 def convert_ndb_scalar_property(graphene_type, ndb_prop, **kwargs):
-    description = "%s %s property" % (ndb_prop._name, graphene_type)
-    if not ndb_prop._repeated and not ndb_prop._required:
-        return graphene_type(description=description, **kwargs)
+    kwargs['description'] = "%s %s property" % (ndb_prop._name, graphene_type)
+    _type = graphene_type
 
     if ndb_prop._repeated:
-        result = List(graphene_type, description=description, **kwargs)
+        _type = List(_type)
 
-        if ndb_prop._required:
-            result = NonNull(result)
+    if ndb_prop._required:
+        _type = NonNull(_type)
 
-        return result
-
-    return NonNull(graphene_type, description=description, **kwargs)
+    return Field(_type, **kwargs)
 
 
 def convert_ndb_string_property(ndb_prop):
@@ -150,4 +150,8 @@ def convert_ndb_property(prop):
     if not field:
         raise Exception("Failed to convert NDB propeerty to a GraphQL field %s (%s)" % (prop._code_name, prop))
 
-    return field
+    if isinstance(field, (list, ConversionResult,)):
+        return field
+
+    return ConversionResult(name=prop._code_name, field=field)
+

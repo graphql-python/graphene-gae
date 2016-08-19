@@ -52,8 +52,9 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
         new_cls = ObjectTypeMeta.__new__(mcs, name, bases, dict(attrs, _meta=options))
         mcs.register(new_cls)
 
+        ndb_fields = mcs.fields_for_ndb_model(options)
         options.ndb_fields = yank_fields_from_attrs(
-            mcs.fields_for_ndb_model(options),
+            ndb_fields,
             _as=Field,
         )
         options.fields = merge(
@@ -84,18 +85,15 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
             if is_not_in_only or is_excluded:
                 continue
 
-            fields = convert_ndb_property(prop)
-            if not fields:
+            results = convert_ndb_property(prop)
+            if not results:
                 continue
 
-            if not isinstance(fields, list):
-                fields = [fields]
+            if not isinstance(results, list):
+                results = [results]
 
-            for f in fields:
-                if isinstance(f, Structure):
-                    ndb_fields[f.of_type._meta.name] = f
-                else:
-                    ndb_fields[f._meta.name] = f
+            for r in results:
+                ndb_fields[r.name] = r.field
 
         return ndb_fields
 
