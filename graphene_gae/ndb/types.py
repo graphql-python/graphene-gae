@@ -17,20 +17,8 @@ from graphene_gae.ndb.converter import convert_ndb_property
 __author__ = 'ekampf'
 
 
-class Registry(object):
-    REGISTRY = {}
-
-    def register(self, cls):
-        # TODO: add checks that cls is of the right type
-        self.REGISTRY[cls._meta.model] = cls
-
-    @classmethod
-    def get_type_for_model(cls, model):
-        return cls.REGISTRY.get(model)
-
-
 class NdbObjectTypeMeta(ObjectTypeMeta):
-    REGISTRY = {}
+    REGISTRY = {}  # Maps between ndb.Model to its GraphQL type
 
     def __new__(mcs, name, bases, attrs):
         if not is_base_type(bases, NdbObjectTypeMeta):
@@ -73,7 +61,7 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
 
     @classmethod
     def register(mcs, object_type_meta):
-        mcs.REGISTRY[object_type_meta._meta.model] = object_type_meta
+        mcs.REGISTRY[object_type_meta._meta.model.__name__] = object_type_meta
 
     @staticmethod
     def fields_for_ndb_model(options):

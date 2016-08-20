@@ -221,69 +221,72 @@ class TestNDBTypes(BaseTest):
         self.assertEqual(article["headline"], "Test1")
         self.assertListEqual(article["keywords"], keywords)
 
-    # def testQuery_structuredProperty(self):
-    #     mobile = PhoneNumber(area="650", number="12345678")
-    #     author_key = Author(name="John Dow", email="john@dow.com", mobile=mobile).put()
-    #     Article(headline="Test1", author_key=author_key).put()
-    #
-    #     result = schema.execute("""
-    #         query Articles {
-    #             articles {
-    #                 headline,
-    #                 author {
-    #                     name
-    #                     email
-    #                     mobile { area, number }
-    #                 }
-    #             }
-    #         }
-    #     """)
-    #     self.assertEmpty(result.errors, msg=str(result.errors))
-    #
-    #     article = result.data['articles'][0]
-    #     self.assertEqual(article["headline"], "Test1")
-    #
-    #     author = article['author']
-    #     self.assertEqual(author["name"], "John Dow")
-    #     self.assertEqual(author["email"], "john@dow.com")
-    #     self.assertDictEqual(dict(area="650", number="12345678"), dict(author["mobile"]))
-    #
-    # def testQuery_structuredProperty_repeated(self):
-    #     address1 = Address(address1="address1", address2="apt 1", city="Mountain View")
-    #     address2 = Address(address1="address2", address2="apt 2", city="Mountain View")
-    #     author_key = Author(name="John Dow", email="john@dow.com", addresses=[address1, address2]).put()
-    #     Article(headline="Test1", author_key=author_key).put()
-    #
-    #     result = schema.execute("""
-    #         query Articles {
-    #             articles {
-    #                 headline,
-    #                 author {
-    #                     name
-    #                     email
-    #                     addresses {
-    #                         address1
-    #                         address2
-    #                         city
-    #                     }
-    #                 }
-    #             }
-    #         }
-    #     """)
-    #     self.assertEmpty(result.errors)
-    #
-    #     article = result.data['articles'][0]
-    #     self.assertEqual(article["headline"], "Test1")
-    #
-    #     author = article['author']
-    #     self.assertEqual(author["name"], "John Dow")
-    #     self.assertEqual(author["email"], "john@dow.com")
-    #     self.assertLength(author["addresses"], 2)
-    #
-    #     addresses = [dict(d) for d in author["addresses"]]
-    #     self.assertIn(address1.to_dict(), addresses)
-    #     self.assertIn(address2.to_dict(), addresses)
-    #
+    def testQuery_structuredProperty(self):
+        mobile = PhoneNumber(area="650", number="12345678")
+        author_key = Author(name="John Dow", email="john@dow.com", mobile=mobile).put()
+        Article(headline="Test1", author_key=author_key).put()
+
+        print str(schema)
+
+        result = schema.execute("""
+            query Articles {
+                articles {
+                    headline,
+                    authorId
+                    author {
+                        name
+                        email
+                        mobile { area, number }
+                    }
+                }
+            }
+        """)
+        self.assertEmpty(result.errors, msg=str(result.errors))
+
+        article = result.data['articles'][0]
+        self.assertEqual(article["headline"], "Test1")
+
+        author = article['author']
+        self.assertEqual(author["name"], "John Dow")
+        self.assertEqual(author["email"], "john@dow.com")
+        self.assertDictEqual(dict(area="650", number="12345678"), dict(author["mobile"]))
+
+    def testQuery_structuredProperty_repeated(self):
+        address1 = Address(address1="address1", address2="apt 1", city="Mountain View")
+        address2 = Address(address1="address2", address2="apt 2", city="Mountain View")
+        author_key = Author(name="John Dow", email="john@dow.com", addresses=[address1, address2]).put()
+        Article(headline="Test1", author_key=author_key).put()
+
+        result = schema.execute("""
+            query Articles {
+                articles {
+                    headline,
+                    author {
+                        name
+                        email
+                        addresses {
+                            address1
+                            address2
+                            city
+                        }
+                    }
+                }
+            }
+        """)
+        self.assertEmpty(result.errors)
+
+        article = result.data['articles'][0]
+        self.assertEqual(article["headline"], "Test1")
+
+        author = article['author']
+        self.assertEqual(author["name"], "John Dow")
+        self.assertEqual(author["email"], "john@dow.com")
+        self.assertLength(author["addresses"], 2)
+
+        addresses = [dict(d) for d in author["addresses"]]
+        self.assertIn(address1.to_dict(), addresses)
+        self.assertIn(address2.to_dict(), addresses)
+
     # def testQuery_keyProperty(self):
     #     author_key = Author(name="john dow", email="john@dow.com").put()
     #     article_key = Article(headline="h1", summary="s1", author_key=author_key).put()

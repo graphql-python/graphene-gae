@@ -21,8 +21,9 @@ class SomeWeirdUnknownProperty(ndb.Property):
 class TestNDBConverter(BaseTest):
     def __assert_conversion(self, ndb_property_type, expected_graphene_type, *args, **kwargs):
         ndb_property = ndb_property_type(*args, **kwargs)
-        graphene_field_type = convert_ndb_property(ndb_property)
-        self.assertIsInstance(graphene_field_type, expected_graphene_type)
+        result = convert_ndb_property(ndb_property)
+        graphene_field = result.field
+        self.assertEqual(graphene_field._type, expected_graphene_type)
 
     def testUnknownProperty_raisesException(self):
         with self.assertRaises(Exception) as context:
@@ -49,17 +50,19 @@ class TestNDBConverter(BaseTest):
 
     def testStringProperty_repeated_shouldConvertToList(self):
         ndb_prop = ndb.StringProperty(repeated=True)
-        graphene_type = convert_ndb_property(ndb_prop)
+        result = convert_ndb_property(ndb_prop)
+        graphene_type = result.field._type
 
         self.assertIsInstance(graphene_type, graphene.List)
-        self.assertIsInstance(graphene_type.of_type, graphene.String)
+        self.assertEqual(graphene_type.of_type, graphene.String)
 
     def testStringProperty_required_shouldConvertToList(self):
         ndb_prop = ndb.StringProperty(required=True)
-        graphene_type = convert_ndb_property(ndb_prop)
+        result = convert_ndb_property(ndb_prop)
+        graphene_type = result.field._type
 
         self.assertIsInstance(graphene_type, graphene.NonNull)
-        self.assertIsInstance(graphene_type.of_type, graphene.String)
+        self.assertEqual(graphene_type.of_type, graphene.String)
 
     def testTextProperty_shouldConvertToString(self):
         self.__assert_conversion(ndb.TextProperty, graphene.String)
