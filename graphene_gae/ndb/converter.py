@@ -8,7 +8,8 @@ from google.appengine.ext import ndb
 from graphene import String, Boolean, Int, Float, List, NonNull, Field, Dynamic, Argument
 from graphene.types.json import JSONString
 from graphene.types.datetime import DateTime
-# from graphene_gae.ndb.fields import NdbKeyStringField #, NdbKeyField
+
+from .fields import NdbKeyStringField, NdbKeyReferenceField, DynamicNdbKeyStringField, DynamicNdbKeyReferenceField
 
 __author__ = 'ekampf'
 
@@ -95,58 +96,9 @@ def convert_ndb_key_propety(ndb_key_prop):
         string_prop_name = singular_name + '_ids' if is_repeated else singular_name + '_id'
         resolved_prop_name = name
 
-    def dynamic_type_key_string_prop():
-        from .types import NdbObjectTypeMeta
-        if not NdbObjectTypeMeta.REGISTRY.get(model):
-            return None
-
-        global_type_name = NdbObjectTypeMeta.REGISTRY[model].__name__
-
-        _type = String
-        if is_repeated:
-            _type = List(_type)
-
-        if is_required:
-            _type = NonNull(_type)
-
-        def resolve(entity, args, *_):
-            is_global_id = not args.get('ndb', False)
-            key = ndb_key_prop._get_user_value(entity)
-            if isinstance(key, list):
-                return [to_global_id(global_type_name, k.urlsafe()) for k in key] if is_global_id else [k.id() for k in key]
-
-            return to_global_id(global_type_name, key.urlsafe()) if is_global_id else key.id()
-
-        return Field(
-            _type,
-            resolver=resolve,
-            args={'ndb': Argument(Boolean, False, description="Return an NDB id (key.id()) instead of a GraphQL global id")}
-        )
-
-    def dynamic_type_key_prop():
-        from .types import NdbObjectTypeMeta
-        _type = NdbObjectTypeMeta.REGISTRY.get(model)
-        if not _type:
-            return None
-
-        if is_repeated:
-            _type = List(_type)
-
-        if is_required:
-            _type = NonNull(_type)
-
-        def resolve(entity, *_):
-            key = ndb_key_prop._get_user_value(entity)
-            if isinstance(key, list):
-                return ndb.get_multi(key)
-
-            return key.get()
-
-        return Field(_type, resolver=resolve)
-
     return [
-        ConversionResult(name=string_prop_name, field=Dynamic(dynamic_type_key_string_prop)),
-        ConversionResult(name=resolved_prop_name, field=Dynamic(dynamic_type_key_prop))
+        ConversionResult(name=string_prop_name, field=DynamicNdbKeyStringField(ndb_key_prop)),
+        ConversionResult(name=resolved_prop_name, field=DynamicNdbKeyReferenceField(ndb_key_prop))
     ]
 
 

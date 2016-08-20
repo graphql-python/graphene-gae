@@ -1,14 +1,16 @@
 import mock
+
+from graphene_gae.ndb.types import NdbObjectTypeMeta, NdbObjectType
 from tests.base_test import BaseTest
 
 from google.appengine.ext import ndb
 
 import graphene
-from graphene import List, NonNull
+from graphene import List, NonNull, Dynamic, String
 from graphene.types.json import JSONString
 from graphene.types.datetime import DateTime
 
-# from graphene_gae.ndb.fields import NdbKeyStringField, NdbKeyField
+from graphene_gae.ndb.fields import NdbKeyStringField, NdbKeyReferenceField, DynamicNdbKeyStringField, DynamicNdbKeyReferenceField
 from graphene_gae.ndb.converter import convert_ndb_property
 
 __author__ = 'ekampf'
@@ -85,62 +87,114 @@ class TestNDBConverter(BaseTest):
     def testJsonProperty_shouldConvertToString(self):
         self.__assert_conversion(ndb.JsonProperty, JSONString)
 
-    # def testKeyProperty_withSuffix(self):
-    #     prop = ndb.KeyProperty()
-    #     prop._code_name = 'user_key'
-    #
-    #     conversion = convert_ndb_property(prop)
-    #
-    #     self.assertLength(conversion, 2)
-    #
-    #     self.assertEqual(conversion[0].name, 'user_id')
-    #     self.assertIsInstance(conversion[0].field, NdbKeyStringField)
-    #
-    #     self.assertEqual(conversion[1].name, 'user')
-    #     self.assertIsInstance(conversion[1].field, NdbKeyField)
-    #
-    # def testKeyProperty_withSuffix_repeated(self):
-    #     prop = ndb.KeyProperty(repeated=True)
-    #     prop._code_name = 'user_keys'
-    #
-    #     conversion = convert_ndb_property(prop)
-    #
-    #     self.assertLength(conversion, 2)
-    #
-    #     self.assertEqual(conversion[0].name, 'user_ids')
-    #     self.assertIsInstance(conversion[0].field, List)
-    #     self.assertIsInstance(conversion[0].field.of_type, NdbKeyStringField)
-    #
-    #     self.assertEqual(conversion[1].name, 'users')
-    #     self.assertIsInstance(conversion[1].field, List)
-    #     self.assertIsInstance(conversion[1].field.of_type, NdbKeyField)
-    #
-    # def testKeyProperty_withSuffix_required(self):
-    #     prop = ndb.KeyProperty(required=True)
-    #     prop._code_name = 'user_key'
-    #
-    #     conversion = convert_ndb_property(prop)
-    #
-    #     self.assertLength(conversion, 2)
-    #
-    #     self.assertEqual(conversion[0].name, 'user_id')
-    #     self.assertIsInstance(conversion[0].field, NonNull)
-    #     self.assertIsInstance(conversion[0].field.of_type, NdbKeyStringField)
-    #
-    #     self.assertEqual(conversion[1].name, 'user')
-    #     self.assertIsInstance(conversion[1].field, NonNull)
-    #     self.assertIsInstance(conversion[1].field.of_type, NdbKeyField)
-    #
-    # def testKeyProperty_withoutSuffix(self):
-    #     prop = ndb.KeyProperty()
-    #     prop._code_name = 'user'
-    #
-    #     conversion = convert_ndb_property(prop)
-    #
-    #     self.assertLength(conversion, 2)
-    #
-    #     self.assertEqual(conversion[0].name, 'user_id')
-    #     self.assertIsInstance(conversion[0].field, NdbKeyStringField)
-    #
-    #     self.assertEqual(conversion[1].name, 'user')
-    #     self.assertIsInstance(conversion[1].field, NdbKeyField)
+    def testKeyProperty_withSuffix(self):
+        class User(ndb.Model):
+            name = ndb.StringProperty()
+
+        class UserType(NdbObjectType):
+            class Meta:
+                model = User
+
+        prop = ndb.KeyProperty(kind='User')
+        prop._code_name = 'user_key'
+
+        conversion = convert_ndb_property(prop)
+
+        self.assertLength(conversion, 2)
+
+        self.assertEqual(conversion[0].name, 'user_id')
+        self.assertIsInstance(conversion[0].field, DynamicNdbKeyStringField)
+        _type = conversion[0].field.get_type()
+        self.assertIsInstance(_type, NdbKeyStringField)
+        self.assertEqual(_type._type, String)
+
+        self.assertEqual(conversion[1].name, 'user')
+        self.assertIsInstance(conversion[1].field, DynamicNdbKeyReferenceField)
+        _type = conversion[1].field.get_type()
+        self.assertIsInstance(_type, NdbKeyReferenceField)
+        self.assertEqual(_type._type, UserType)
+
+    def testKeyProperty_withSuffix_repeated(self):
+        class User(ndb.Model):
+            name = ndb.StringProperty()
+
+        class UserType(NdbObjectType):
+            class Meta:
+                model = User
+
+        prop = ndb.KeyProperty(kind='User', repeated=True)
+        prop._code_name = 'user_keys'
+
+        conversion = convert_ndb_property(prop)
+
+        self.assertLength(conversion, 2)
+
+        self.assertEqual(conversion[0].name, 'user_ids')
+        self.assertIsInstance(conversion[0].field, DynamicNdbKeyStringField)
+        _type = conversion[0].field.get_type()
+        self.assertIsInstance(_type, NdbKeyStringField)
+        self.assertIsInstance(_type._type, List)
+        self.assertEqual(_type._type.of_type, String)
+
+        self.assertEqual(conversion[1].name, 'users')
+        self.assertIsInstance(conversion[1].field, DynamicNdbKeyReferenceField)
+        _type = conversion[1].field.get_type()
+        self.assertIsInstance(_type, NdbKeyReferenceField)
+        self.assertIsInstance(_type._type, List)
+        self.assertEqual(_type._type.of_type, UserType)
+
+    def testKeyProperty_withSuffix_required(self):
+        class User(ndb.Model):
+            name = ndb.StringProperty()
+
+        class UserType(NdbObjectType):
+            class Meta:
+                model = User
+
+        prop = ndb.KeyProperty(kind='User', required=True)
+        prop._code_name = 'user_key'
+
+        conversion = convert_ndb_property(prop)
+
+        self.assertLength(conversion, 2)
+
+        self.assertEqual(conversion[0].name, 'user_id')
+        self.assertIsInstance(conversion[0].field, DynamicNdbKeyStringField)
+        _type = conversion[0].field.get_type()
+        self.assertIsInstance(_type, NdbKeyStringField)
+        self.assertIsInstance(_type._type, NonNull)
+        self.assertEqual(_type._type.of_type, String)
+
+        self.assertEqual(conversion[1].name, 'user')
+        self.assertIsInstance(conversion[1].field, DynamicNdbKeyReferenceField)
+        _type = conversion[1].field.get_type()
+        self.assertIsInstance(_type, NdbKeyReferenceField)
+        self.assertIsInstance(_type._type, NonNull)
+        self.assertEqual(_type._type.of_type, UserType)
+
+    def testKeyProperty_withoutSuffix(self):
+        class User(ndb.Model):
+            name = ndb.StringProperty()
+
+        class UserType(NdbObjectType):
+            class Meta:
+                model = User
+
+        prop = ndb.KeyProperty(kind='User')
+        prop._code_name = 'user'
+
+        conversion = convert_ndb_property(prop)
+
+        self.assertLength(conversion, 2)
+
+        self.assertEqual(conversion[0].name, 'user_id')
+        self.assertIsInstance(conversion[0].field, DynamicNdbKeyStringField)
+        _type = conversion[0].field.get_type()
+        self.assertIsInstance(_type, NdbKeyStringField)
+        self.assertEqual(_type._type, String)
+
+        self.assertEqual(conversion[1].name, 'user')
+        self.assertIsInstance(conversion[1].field, DynamicNdbKeyReferenceField)
+        _type = conversion[1].field.get_type()
+        self.assertIsInstance(_type, NdbKeyReferenceField)
+        self.assertEqual(_type._type, UserType)
