@@ -1,4 +1,5 @@
 from graphene import resolve_only_args
+from graphql_relay import to_global_id
 
 from tests.base_test import BaseTest
 
@@ -30,7 +31,6 @@ class AuthorType(NdbObjectType):
     class Meta:
         model = Author
         interfaces = (Node,)
-        only_fields = ("name", "email")
 
 
 class TagType(NdbObjectType):
@@ -49,7 +49,6 @@ class ArticleType(NdbObjectType):
     class Meta:
         model = Article
         interfaces = (Node,)
-        exclude_fields = ("author_key", "tags")
 
     comments = NdbConnectionField(CommentType)
 
@@ -83,23 +82,13 @@ class TestNDBTypesRelay(BaseTest):
             author_key=Author(name="John Dow", email="john@dow.com").put(),
         ).put()
 
-        result = ArticleType.get_node(article_key.urlsafe())
+        result = ArticleType.get_node(to_global_id('ArticleType', article_key.urlsafe()))
         article = article_key.get()
 
         self.assertIsNotNone(result)
         self.assertEqual(result.headline, article.headline)
         self.assertEqual(result.summary, article.summary)
         # self.assertEqual(result.author_key, article_key.author_key)  # TODO
-
-    def testNdbNode_globalIdToKey_returnsNdbKey(self):
-        article_key = Article(
-            headline="TestGetNode",
-            summary="1",
-            author_key=Author(name="John Dow", email="john@dow.com").put(),
-        ).put()
-
-        node = ArticleType.get_node(article_key.urlsafe())
-        self.assertEqual(NdbObjectType.global_id_to_key(node.to_global_id()), article_key)
 
     def test_keyProperty(self):
         Article(
@@ -112,6 +101,8 @@ class TestNDBTypesRelay(BaseTest):
                 Tag(name="tag3").put(),
             ]
         ).put()
+
+        print str(schema)
 
         result = schema.execute("""
             query Articles {
@@ -202,8 +193,6 @@ class TestNDBTypesRelay(BaseTest):
         Comment(parent=a1, body="c1").put()
         Comment(parent=a2, body="c2").put()
         Comment(parent=a3, body="c3").put()
-
-        print str(schema)
 
         result = schema.execute("""
             query Articles {

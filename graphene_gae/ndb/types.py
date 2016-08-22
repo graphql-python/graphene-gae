@@ -2,6 +2,7 @@ import inspect
 import six
 from collections import OrderedDict
 
+from graphql_relay import from_global_id
 
 from google.appengine.ext import ndb
 
@@ -103,19 +104,26 @@ class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, ObjectType)):
         return type(root) == cls._meta.model
 
     @classmethod
-    def get_node(cls, urlsafe_key, *_):
+    def get_node(cls, global_id, *_):
+        try:
+            _type, url_safe_key = from_global_id(global_id)
+            assert _type == cls.__name__
+        except ValueError:
+            return None
+
         model = cls._meta.model
         try:
-            key = ndb.Key(urlsafe=urlsafe_key)
+            key = ndb.Key(urlsafe=url_safe_key)
         except:
             return None
 
         assert key.kind() == model.__name__
         return key.get()
 
-    def resolve_id(self, entity, args, context, info):
+    @classmethod
+    def resolve_id(cls, entity, args, context, info):
         from graphql_relay import to_global_id
-        return to_global_id(type(self).__name__, entity.key.urlsafe())
+        return to_global_id(cls.__name__, entity.key.urlsafe())
 
     @staticmethod
     def is_valid_ndb_model(model):
