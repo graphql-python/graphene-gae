@@ -112,10 +112,12 @@ class DynamicNdbKeyStringField(Dynamic):
 
         def get_type():
             from .types import NdbObjectTypeMeta
-            if not NdbObjectTypeMeta.REGISTRY.get(kind):
+            kind_name = kind if isinstance(kind, six.string_types) else kind.__name__
+
+            if not NdbObjectTypeMeta.REGISTRY.get(kind_name):
                 return None
 
-            global_type_name = kind if isinstance(kind, six.string_types) else NdbObjectTypeMeta.REGISTRY[kind].__name__
+            global_type_name = NdbObjectTypeMeta.REGISTRY[kind_name].__name__
             return NdbKeyStringField(ndb_key_prop, global_type_name)
 
         super(DynamicNdbKeyStringField, self).__init__(
@@ -130,7 +132,8 @@ class DynamicNdbKeyReferenceField(Dynamic):
 
         def get_type():
             from .types import NdbObjectTypeMeta
-            _type = NdbObjectTypeMeta.REGISTRY.get(kind if isinstance(kind, six.string_types) else kind.__name__)
+            kind_name = kind if isinstance(kind, six.string_types) else kind.__name__
+            _type = NdbObjectTypeMeta.REGISTRY.get(kind_name)
             if not _type:
                 return None
 
@@ -165,6 +168,9 @@ class NdbKeyStringField(Field):
     def resolve_key_to_string(self, entity, args, context, info):
         is_global_id = not args.get('ndb', False)
         key_value = self.__ndb_key_prop._get_user_value(entity)
+        if not key_value:
+            return None
+
         if isinstance(key_value, list):
             return [to_global_id(self.__graphql_type_name, k.urlsafe()) for k in key_value] if is_global_id else [k.id() for k in key_value]
 
@@ -192,6 +198,9 @@ class NdbKeyReferenceField(Field):
 
     def resolve_key_reference(self, entity, args, context, info):
         key_value = self.__ndb_key_prop._get_user_value(entity)
+        if not key_value:
+            return None
+
         if isinstance(key_value, list):
             return ndb.get_multi(key_value)
 

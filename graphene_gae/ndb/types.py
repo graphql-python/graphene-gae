@@ -2,15 +2,13 @@ import inspect
 import six
 from collections import OrderedDict
 
-from graphene.types.structures import Structure
 
 from google.appengine.ext import ndb
 
-from graphene import ObjectType, Field, NonNull
+from graphene import ObjectType, Field, String
 from graphene.types.objecttype import ObjectTypeMeta, merge, yank_fields_from_attrs
 from graphene.utils.is_base_type import is_base_type
 from graphene.types.options import Options
-from graphene.relay import is_node
 
 from graphene_gae.ndb.converter import convert_ndb_property
 
@@ -88,6 +86,8 @@ class NdbObjectTypeMeta(ObjectTypeMeta):
             for r in results:
                 ndb_fields[r.name] = r.field
 
+        ndb_fields['ndb_id'] = Field(String, resolver=lambda entity, *_: str(entity.key.id()))
+
         return ndb_fields
 
 
@@ -113,9 +113,9 @@ class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, ObjectType)):
         assert key.kind() == model.__name__
         return key.get()
 
-    @staticmethod
-    def resolve_id(root, args, context, info):
-        return root.key.urlsafe()
+    def resolve_id(self, entity, args, context, info):
+        from graphql_relay import to_global_id
+        return to_global_id(type(self).__name__, entity.key.urlsafe())
 
     @staticmethod
     def is_valid_ndb_model(model):
