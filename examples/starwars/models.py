@@ -2,6 +2,7 @@ from google.appengine.ext import ndb
 
 __author__ = 'ekampf'
 
+
 class Character(ndb.Model):
     name = ndb.StringProperty()
 

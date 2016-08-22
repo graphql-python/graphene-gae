@@ -64,11 +64,11 @@ class Query(graphene.ObjectType):
 
     @resolve_only_args
     def resolve_rebels(self):
-        return Faction(FactionModel.get_by_id("rebels"))
+        return FactionModel.get_by_id("rebels")
 
     @resolve_only_args
     def resolve_empire(self):
-        return Faction(FactionModel.get_by_id("empire"))
+        return FactionModel.get_by_id("empire")
 
 
 class Mutation(graphene.ObjectType):
