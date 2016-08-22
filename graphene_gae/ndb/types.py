@@ -122,8 +122,7 @@ class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, ObjectType)):
 
     @classmethod
     def resolve_id(cls, entity, args, context, info):
-        from graphql_relay import to_global_id
-        return to_global_id(cls.__name__, entity.key.urlsafe())
+        return entity.key.urlsafe()
 
     @staticmethod
     def is_valid_ndb_model(model):
