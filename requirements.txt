@@ -7,5 +7,4 @@ coverage
 flake8
 Sphinx
 
-git+https://github.com/graphql-python/graphene@next
 PyYAML==3.11
