@@ -82,7 +82,7 @@ class TestNDBTypesRelay(BaseTest):
             author_key=Author(name="John Dow", email="john@dow.com").put(),
         ).put()
 
-        result = ArticleType.get_node(to_global_id('ArticleType', article_key.urlsafe()))
+        result = ArticleType.get_node(article_key.urlsafe())
         article = article_key.get()
 
         self.assertIsNotNone(result)
