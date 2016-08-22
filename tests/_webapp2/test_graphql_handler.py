@@ -4,7 +4,7 @@ from tests.base_test import BaseTest
 import json
 import webtest
 import graphene
-
+from graphene import relay
 from graphene_gae.webapp2 import graphql_application, GraphQLHandler
 
 __author__ = 'ekampf'
@@ -13,17 +13,18 @@ __author__ = 'ekampf'
 class QueryRootType(graphene.ObjectType):
     default_greet = 'World'
 
-    greet = graphene.Field(graphene.String(), who=graphene.Argument(graphene.String()))
+    greet = graphene.Field(graphene.String, who=graphene.Argument(graphene.String))
     resolverRaises = graphene.String()
 
-    def resolve_greet(self, args, info):
-        return 'Hello %s!' % args.get('who', self.default_greet)
+    @graphene.resolve_only_args
+    def resolve_greet(self, who):
+        return 'Hello %s!' % who
 
     def resolve_resolver_raises(self, *_):
         raise Exception()
 
 
-class ChangeDefaultGreeting(graphene.Mutation):
+class ChangeDefaultGreetingMutation(relay.ClientIDMutation):
     class Input:
         value = graphene.String()
 
@@ -31,13 +32,13 @@ class ChangeDefaultGreeting(graphene.Mutation):
     defaultGreeting = graphene.String()
 
     @classmethod
-    def mutate(cls, instance, args, info):
-        QueryRootType.default_greet = args.get('value')
-        return ChangeDefaultGreeting(ok=True, defaultGreeting=QueryRootType.default_greet)
+    def mutate_and_get_payload(cls, input, info):
+        QueryRootType.default_greet = input.get('value')
+        return ChangeDefaultGreetingMutation(ok=True, defaultGreeting=QueryRootType.default_greet)
 
 
 class MutationRootType(graphene.ObjectType):
-    changeDefaultGreeting = graphene.Field(ChangeDefaultGreeting)
+    changeDefaultGreeting = graphene.Field(ChangeDefaultGreetingMutation)
 
 schema = graphene.Schema(query=QueryRootType, mutation=MutationRootType)
 
