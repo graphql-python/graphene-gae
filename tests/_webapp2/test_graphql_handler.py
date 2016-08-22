@@ -32,13 +32,13 @@ class ChangeDefaultGreetingMutation(relay.ClientIDMutation):
     defaultGreeting = graphene.String()
 
     @classmethod
-    def mutate_and_get_payload(cls, input, info):
+    def mutate_and_get_payload(cls, input, context, info):
         QueryRootType.default_greet = input.get('value')
         return ChangeDefaultGreetingMutation(ok=True, defaultGreeting=QueryRootType.default_greet)
 
 
 class MutationRootType(graphene.ObjectType):
-    changeDefaultGreeting = graphene.Field(ChangeDefaultGreetingMutation)
+    changeDefaultGreeting = ChangeDefaultGreetingMutation.Field()
 
 schema = graphene.Schema(query=QueryRootType, mutation=MutationRootType)
 
@@ -157,12 +157,13 @@ class TestGraphQLHandler(BaseTest):
         self.assertEqual(response_data['errors'][0]['message'], 'Variables are invalid JSON.')
 
     def testPOST_mutations(self):
+        print str(schema)
         response = self.app.post('/graphql',
                                  json.dumps(
                                      dict(
                                          query='''
                                          mutation TestMutatio  {
-                                            changeDefaultGreeting(value: "universe") {
+                                            changeDefaultGreeting(input: { value: "universe" } ) {
                                                 ok,
                                                 defaultGreeting
                                             }
