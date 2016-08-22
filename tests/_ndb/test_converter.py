@@ -1,12 +1,12 @@
 import mock
 
-from graphene_gae.ndb.types import NdbObjectTypeMeta, NdbObjectType
+from graphene_gae.ndb.types import NdbObjectType
 from tests.base_test import BaseTest
 
 from google.appengine.ext import ndb
 
 import graphene
-from graphene import List, NonNull, Dynamic, String
+from graphene import List, NonNull, String
 from graphene.types.json import JSONString
 from graphene.types.datetime import DateTime
 

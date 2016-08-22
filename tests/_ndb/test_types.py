@@ -1,6 +1,5 @@
 from graphql_relay import to_global_id
 
-from graphene_gae.ndb.fields import NdbKeyReferenceField, NdbKeyStringField
 from tests.base_test import BaseTest
 
 import graphene

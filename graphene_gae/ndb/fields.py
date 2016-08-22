@@ -5,7 +5,7 @@ from google.appengine.ext import ndb
 from google.appengine.ext.db import BadArgumentError, Timeout
 
 from graphql_relay import to_global_id
-from graphql_relay.connection.connectiontypes import PageInfo, Edge
+from graphql_relay.connection.connectiontypes import Edge
 from graphene import relay, Argument, Boolean, Int, String, Field, List, NonNull, Dynamic
 from graphene.relay.connection import PageInfo
 

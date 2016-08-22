@@ -14,7 +14,6 @@ from tests.models import Tag, Comment, Article, Author, Address, PhoneNumber
 __author__ = 'ekampf'
 
 
-
 class AddressType(NdbObjectType):
     class Meta:
         model = Address

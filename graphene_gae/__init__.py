@@ -1,23 +1,17 @@
 # -*- coding: utf-8 -*-
 
 from .ndb.types import (
-    NdbObjectType,
-    # NdbNode,
+    NdbObjectType
 )
 
-# from .ndb.fields import (
-    # NdbConnection,
-    # NdbConnectionField,
-    # NdbKeyField
-# )
+from .ndb.fields import (
+    NdbConnectionField,
+)
 
 __author__ = 'Eran Kampf'
 __version__ = '0.1.9'
 
 __all__ = [
     NdbObjectType,
-    # NdbNode,
-    # NdbConnection,
-    # NdbConnectionField,
-    # NdbKeyField
+    NdbConnectionField,
 ]

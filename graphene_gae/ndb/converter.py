@@ -1,15 +1,14 @@
 from collections import namedtuple
 
 import inflect
-from graphql_relay import to_global_id
 
 from google.appengine.ext import ndb
 
-from graphene import String, Boolean, Int, Float, List, NonNull, Field, Dynamic, Argument
+from graphene import String, Boolean, Int, Float, List, NonNull, Field, Dynamic
 from graphene.types.json import JSONString
 from graphene.types.datetime import DateTime
 
-from .fields import NdbKeyStringField, NdbKeyReferenceField, DynamicNdbKeyStringField, DynamicNdbKeyReferenceField
+from .fields import DynamicNdbKeyStringField, DynamicNdbKeyReferenceField
 
 __author__ = 'ekampf'
 
@@ -82,8 +81,6 @@ def convert_ndb_key_propety(ndb_key_prop):
 
     """
     is_repeated = ndb_key_prop._repeated
-    is_required = ndb_key_prop._required
-    model = ndb_key_prop._kind
     name = ndb_key_prop._code_name
 
     if name.endswith('_key') or name.endswith('_keys'):
@@ -124,7 +121,6 @@ def convert_local_structured_property(ndb_structured_property):
 
     field = Dynamic(dynamic_type)
     return ConversionResult(name=name, field=field)
-
 
 
 def convert_computed_property(ndb_computed_prop):
