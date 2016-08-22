@@ -2,8 +2,6 @@ import inspect
 import six
 from collections import OrderedDict
 
-from graphql_relay import from_global_id
-
 from google.appengine.ext import ndb
 
 from graphene import ObjectType, Field, String

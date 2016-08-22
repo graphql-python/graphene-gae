@@ -1,5 +1,4 @@
 from graphene import resolve_only_args
-from graphql_relay import to_global_id
 
 from tests.base_test import BaseTest
 
