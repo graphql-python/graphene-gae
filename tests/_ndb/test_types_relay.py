@@ -102,8 +102,6 @@ class TestNDBTypesRelay(BaseTest):
             ]
         ).put()
 
-        print str(schema)
-
         result = schema.execute("""
             query Articles {
                 articles(first:2) {
@@ -186,7 +184,6 @@ class TestNDBTypesRelay(BaseTest):
             self.assertEqual(comments[0]['node']['body'], "c" + article['summary'])
 
     def test_connectionField_keysOnly(self):
-        print str(schema)
         a1 = Article(headline="Test1", summary="1").put()
         a2 = Article(headline="Test2", summary="2").put()
         a3 = Article(headline="Test3", summary="3").put()

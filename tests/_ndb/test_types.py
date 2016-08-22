@@ -227,8 +227,6 @@ class TestNDBTypes(BaseTest):
         author_key = Author(name="John Dow", email="john@dow.com", mobile=mobile).put()
         Article(headline="Test1", author_key=author_key).put()
 
-        print str(schema)
-
         result = schema.execute("""
             query Articles {
                 articles {

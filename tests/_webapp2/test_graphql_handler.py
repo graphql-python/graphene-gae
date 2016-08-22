@@ -157,7 +157,6 @@ class TestGraphQLHandler(BaseTest):
         self.assertEqual(response_data['errors'][0]['message'], 'Variables are invalid JSON.')
 
     def testPOST_mutations(self):
-        print str(schema)
         response = self.app.post('/graphql',
                                  json.dumps(
                                      dict(
