@@ -68,9 +68,6 @@ To create a GraphQL schema for it you simply have to write the following:
     import graphene
     from graphene_gae import NdbObjectType
 
-    schema = graphene.Schema()
-
-    @schema.register
     class ArticleType(NdbObjectType):
         class Meta:
             model = Article
@@ -82,7 +79,7 @@ To create a GraphQL schema for it you simply have to write the following:
         def resolve_articles(self):
             return Article.query()
 
-    schema.query = QueryRoot
+    schema = graphene.Schema(query=QueryRoot)
 
 Then you can simply query the schema:
 
