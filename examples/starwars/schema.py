@@ -4,7 +4,7 @@ import graphene
 from graphene import relay, resolve_only_args
 from graphene_gae import NdbObjectType, NdbConnectionField
 
-from .data import (create_ship)
+from .data import create_ship
 
 from .models import Character as CharacterModel
 from .models import Faction as FactionModel
@@ -49,7 +49,7 @@ class IntroduceShip(relay.ClientIDMutation):
         faction_key = ndb.Key(FactionModel, faction_id)
         ship = create_ship(ship_name, faction_key)
         faction = faction_key.get()
-        return IntroduceShip(ship=Ship(ship), faction=Faction(faction))
+        return IntroduceShip(ship=ship, faction=faction)
 
 
 class Query(graphene.ObjectType):
