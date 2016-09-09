@@ -8,3 +8,4 @@ flake8
 Sphinx
 
 PyYAML==3.11
+graphene>=1.0.dev
