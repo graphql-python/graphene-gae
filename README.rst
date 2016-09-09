@@ -18,6 +18,11 @@ A Google AppEngine integration library for `Graphene <http://graphene-python.org
 * Free software: BSD license
 * Documentation: https://graphene_gae.readthedocs.org.
 
+Upgrade Notes
+-------------
+If you're upgrading from an older version (pre 1.0 version) please check out the `Graphene Upgrade Guide <https://github.com/graphql-python/graphene/blob/master/UPGRADE-v1.0.md>`
+
+
 Installation
 ------------
 
