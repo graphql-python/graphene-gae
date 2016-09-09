@@ -1,56 +1,58 @@
+from graphene import resolve_only_args
+
 from tests.base_test import BaseTest
 
 from google.appengine.ext import ndb
 
 import graphene
-from graphene_gae import NdbNode, NdbConnectionField
+from graphene.relay import Node
+from graphene_gae import NdbObjectType
+from graphene_gae.ndb.fields import NdbConnectionField
 
 from tests.models import Tag, Comment, Article, Author, Address, PhoneNumber
 
 __author__ = 'ekampf'
 
 
-schema = graphene.Schema()
-
-
-@schema.register
-class AddressType(NdbNode):
+class AddressType(NdbObjectType):
     class Meta:
         model = Address
+        interfaces = (Node,)
 
 
-@schema.register
-class PhoneNumberType(NdbNode):
+class PhoneNumberType(NdbObjectType):
     class Meta:
         model = PhoneNumber
+        interfaces = (Node,)
 
 
-@schema.register
-class AuthorType(NdbNode):
+class AuthorType(NdbObjectType):
     class Meta:
         model = Author
+        interfaces = (Node,)
 
 
-@schema.register
-class TagType(NdbNode):
+class TagType(NdbObjectType):
     class Meta:
         model = Tag
+        interfaces = (Node,)
 
 
-@schema.register
-class CommentType(NdbNode):
+class CommentType(NdbObjectType):
     class Meta:
         model = Comment
+        interfaces = (Node,)
 
 
-@schema.register
-class ArticleType(NdbNode):
+class ArticleType(NdbObjectType):
     class Meta:
         model = Article
+        interfaces = (Node,)
 
     comments = NdbConnectionField(CommentType)
 
-    def resolve_comments(self, args, info):
+    @resolve_only_args
+    def resolve_comments(self):
         return Comment.query(ancestor=self.key)
 
 
@@ -58,7 +60,7 @@ class QueryRoot(graphene.ObjectType):
     articles = NdbConnectionField(ArticleType)
 
 
-schema.query = QueryRoot
+schema = graphene.Schema(query=QueryRoot)
 
 
 class TestNDBTypesRelay(BaseTest):
@@ -80,18 +82,12 @@ class TestNDBTypesRelay(BaseTest):
         ).put()
 
         result = ArticleType.get_node(article_key.urlsafe())
+        article = article_key.get()
+
         self.assertIsNotNone(result)
-        self.assertEqual(result.instance, article_key.get())
-
-    def testNdbNode_globalIdToKey_returnsNdbKey(self):
-        article_key = Article(
-            headline="TestGetNode",
-            summary="1",
-            author_key=Author(name="John Dow", email="john@dow.com").put(),
-        ).put()
-
-        node = ArticleType.get_node(article_key.urlsafe())
-        self.assertEqual(NdbNode.global_id_to_key(node.to_global_id()), article_key)
+        self.assertEqual(result.headline, article.headline)
+        self.assertEqual(result.summary, article.summary)
+        # self.assertEqual(result.author_key, article_key.author_key)  # TODO
 
     def test_keyProperty(self):
         Article(

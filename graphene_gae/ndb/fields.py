@@ -1,11 +1,13 @@
+from functools import partial
+import six
+
 from google.appengine.ext import ndb
 from google.appengine.ext.db import BadArgumentError, Timeout
 
-from graphene import relay, Argument
-from graphene.core.exceptions import SkipField
-from graphene.core.types.base import FieldType
-from graphene.core.types.scalars import Boolean, Int, String
 from graphql_relay import to_global_id
+from graphql_relay.connection.connectiontypes import Edge
+from graphene import relay, Argument, Boolean, Int, String, Field, List, NonNull, Dynamic
+from graphene.relay.connection import PageInfo
 
 __author__ = 'ekampf'
 
@@ -19,8 +21,8 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
     so pagination will only work if the array is static.
     '''
     connection_type = connection_type or relay.Connection
-    edge_type = edge_type or relay.Edge
-    pageinfo_type = pageinfo_type or relay.PageInfo
+    edge_type = edge_type or Edge
+    pageinfo_type = pageinfo_type or PageInfo
 
     full_args = dict(args, **kwargs)
     first = full_args.get('first')
@@ -49,7 +51,7 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
 
         if keys_only:
             # entity is actualy an ndb.Key and we need to create an empty entity to hold it
-            entity = edge_type.node_type._meta.model(key=entity)
+            entity = edge_type._meta.fields['node']._type._meta.model(key=entity)
 
         edge = edge_type(node=entity, cursor=ndb_iter.cursor_after().urlsafe())
         edges.append(edge)
@@ -71,134 +73,140 @@ def connection_from_ndb_query(query, args={}, connection_type=None,
     )
 
 
-class NdbConnection(relay.types.Connection):
-    @classmethod
-    def from_list(cls, ndb_query, args, context, info):
-        connection = connection_from_ndb_query(ndb_query, args, connection_type=cls, edge_type=cls.edge_type, pageinfo_type=relay.PageInfo)
-        connection.set_connection_data(ndb_query)
-        return connection
-
-
 class NdbConnectionField(relay.ConnectionField):
-    def __init__(self, type, **kwargs):
-        kwargs['connection_type'] = kwargs.pop('connection_type', NdbConnection)
+    def __init__(self, type, *args, **kwargs):
         super(NdbConnectionField, self).__init__(
             type,
+            *args,
             keys_only=Boolean(),
             batch_size=Int(),
             page_size=Int(),
-            **kwargs)
-
-        if not self.default:
-            self.default = self.model.query()
+            **kwargs
+        )
 
     @property
     def model(self):
-        return self.type._meta.model
+        return self.type._meta.node._meta.model
+
+    @staticmethod
+    def connection_resolver(resolver, connection, model, root, args, context, info):
+        ndb_query = resolver(root, args, context, info)
+        if ndb_query is None:
+            ndb_query = model.query()
+
+        return connection_from_ndb_query(
+            ndb_query,
+            args=args,
+            connection_type=connection,
+            edge_type=connection.Edge,
+            pageinfo_type=PageInfo
+        )
+
+    def get_resolver(self, parent_resolver):
+        return partial(self.connection_resolver, parent_resolver, self.type, self.model)
 
 
-class NdbKeyStringField(String):
-    def __init__(self, name, kind, *args, **kwargs):
-        self.name = name
-        self.kind = kind
+class DynamicNdbKeyStringField(Dynamic):
+    def __init__(self, ndb_key_prop, *args, **kwargs):
+        kind = ndb_key_prop._kind
 
-        if 'resolver' not in kwargs:
-            kwargs['resolver'] = self.default_resolver
+        def get_type():
+            from .types import NdbObjectTypeMeta
+            kind_name = kind if isinstance(kind, six.string_types) else kind.__name__
 
-        if 'ndb' not in kwargs:
-            kwargs['ndb'] = Argument(Boolean(),
-                                     description="Return an NDB id (key.id()) instead of a GraphQL global id",
-                                     default=False)
+            if not NdbObjectTypeMeta.REGISTRY.get(kind_name):
+                return None
 
-        super(NdbKeyStringField, self).__init__(*args, **kwargs)
+            global_type_name = NdbObjectTypeMeta.REGISTRY[kind_name].__name__
+            return NdbKeyStringField(ndb_key_prop, global_type_name)
 
-    def internal_type(self, schema):
-        _type = self.get_object_type(schema)
-        if not _type and self.parent._meta.only_fields:
-            raise Exception(
-                "Model %r is not accessible by the schema. "
-                "You can either register the type manually "
-                "using @schema.register. "
-                "Or disable the field in %s" % (
-                    self.kind,
-                    self.parent,
-                )
-            )
+        super(DynamicNdbKeyStringField, self).__init__(
+            get_type,
+            *args, **kwargs
+        )
 
-        if not _type:
-            raise SkipField()
 
-        from graphql import GraphQLString
-        return GraphQLString
+class DynamicNdbKeyReferenceField(Dynamic):
+    def __init__(self, ndb_key_prop, *args, **kwargs):
+        kind = ndb_key_prop._kind
 
-    def get_object_type(self, schema):
-        for _type in schema.types.values():
-            type_model = hasattr(_type, '_meta') and getattr(_type._meta, 'model', None)
-            if not type_model:
-                continue
+        def get_type():
+            from .types import NdbObjectTypeMeta
+            kind_name = kind if isinstance(kind, six.string_types) else kind.__name__
+            _type = NdbObjectTypeMeta.REGISTRY.get(kind_name)
+            if not _type:
+                return None
 
-            if self.kind == type_model or self.kind == type_model.__name__:
-                return _type
+            return NdbKeyReferenceField(ndb_key_prop, _type)
 
-    def default_resolver(self, node, args, info):
-        entity = node.instance
-        key = getattr(entity, self.name)
-        if not key:
+        super(DynamicNdbKeyReferenceField, self).__init__(
+            get_type,
+            *args, **kwargs
+        )
+
+
+class NdbKeyStringField(Field):
+    def __init__(self, ndb_key_prop, graphql_type_name, *args, **kwargs):
+        self.__ndb_key_prop = ndb_key_prop
+        self.__graphql_type_name = graphql_type_name
+        is_repeated = ndb_key_prop._repeated
+        is_required = ndb_key_prop._required
+
+        _type = String
+        if is_repeated:
+            _type = List(_type)
+
+        if is_required:
+            _type = NonNull(_type)
+
+        kwargs['args'] = {
+            'ndb': Argument(Boolean, False, description="Return an NDB id (key.id()) instead of a GraphQL global id")
+        }
+
+        super(NdbKeyStringField, self).__init__(_type, *args, **kwargs)
+
+    def resolve_key_to_string(self, entity, args, context, info):
+        is_global_id = not args.get('ndb', False)
+        key_value = self.__ndb_key_prop._get_user_value(entity)
+        if not key_value:
             return None
 
-        is_global_id = not args.get('ndb', False)
+        if isinstance(key_value, list):
+            return [to_global_id(self.__graphql_type_name, k.urlsafe()) for k in key_value] if is_global_id else [k.id() for k in key_value]
 
-        if isinstance(key, list):
-            t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
-            return [to_global_id(t, k.urlsafe()) for k in key] if is_global_id else [k.id() for k in key]
+        return to_global_id(self.__graphql_type_name, key_value.urlsafe()) if is_global_id else key_value.id()
 
-        t = self.get_object_type(info.schema.graphene_schema)._meta.type_name
-        return to_global_id(t, key.urlsafe()) if is_global_id else key.id()
+    def get_resolver(self, parent_resolver):
+        return self.resolve_key_to_string
 
 
-class NdbKeyField(FieldType):
-    def __init__(self, name, kind, *args, **kwargs):
-        self.name = name
-        self.kind = kind
+class NdbKeyReferenceField(Field):
+    def __init__(self, ndb_key_prop, graphql_type, *args, **kwargs):
+        self.__ndb_key_prop = ndb_key_prop
+        self.__graphql_type = graphql_type
+        is_repeated = ndb_key_prop._repeated
+        is_required = ndb_key_prop._required
 
-        if 'resolver' not in kwargs:
-            kwargs['resolver'] = self.default_resolver
+        _type = self.__graphql_type
+        if is_repeated:
+            _type = List(_type)
 
-        super(NdbKeyField, self).__init__(*args, **kwargs)
+        if is_required:
+            _type = NonNull(_type)
 
-    def internal_type(self, schema):
-        _type = self.get_object_type(schema)
-        if not _type and self.parent._meta.only_fields:
-            raise Exception(
-                "Model %r is not accessible by the schema. "
-                "You can either register the type manually "
-                "using @schema.register. "
-                "Or disable the field in %s" % (
-                    self.kind,
-                    self.parent,
-                )
-            )
+        super(NdbKeyReferenceField, self).__init__(_type, *args, **kwargs)
 
-        if not _type:
-            raise SkipField()
+    def resolve_key_reference(self, entity, args, context, info):
+        key_value = self.__ndb_key_prop._get_user_value(entity)
+        if not key_value:
+            return None
 
-        return schema.T(_type)
+        if isinstance(key_value, list):
+            return ndb.get_multi(key_value)
 
-    def get_object_type(self, schema):
-        for _type in schema.types.values():
-            type_model = hasattr(_type, '_meta') and getattr(_type._meta, 'model', None)
-            if not type_model:
-                continue
+        return key_value.get()
 
-            if self.kind == type_model or self.kind == type_model.__name__:
-                return _type
+    def get_resolver(self, parent_resolver):
+        return self.resolve_key_reference
 
-    def default_resolver(self, node, args, info):
-        entity = node.instance
-        key = getattr(entity, self.name)
 
-        if isinstance(key, list):
-            entities = ndb.get_multi(key)
-            return entities
-
-        return key.get()
