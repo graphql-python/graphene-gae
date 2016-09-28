@@ -137,6 +137,7 @@ converters = {
     ndb.DateProperty: convert_ndb_datetime_property,
     ndb.DateTimeProperty: convert_ndb_datetime_property,
     ndb.KeyProperty: convert_ndb_key_propety,
+    ndb.StructuredProperty: convert_local_structured_property,
     ndb.LocalStructuredProperty: convert_local_structured_property,
     ndb.ComputedProperty: convert_computed_property
 }

@@ -3,6 +3,14 @@
 History
 -------
 
+1.0.1 (2016-09-28)
+------------------
+* Added missing support for StructuredProperty
+
+1.0 (2016-09-26)
+----------------
+* Upgraded to Graphene 1.0
+
 0.1.9 (2016-08-17)
 ---------------------
 * Each NdbObject now exposes an `ndbId` String field that maps to the entity's `key.id()`
