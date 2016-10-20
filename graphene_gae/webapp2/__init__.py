@@ -25,8 +25,6 @@ class GraphQLHandler(webapp2.RequestHandler):
                                 context_value=self._get_context(),
                                 root_value=self._get_root_value())
 
-
-
         response = {}
         if result.errors:
             response['errors'] = [self.__format_error(e) for e in result.errors]
