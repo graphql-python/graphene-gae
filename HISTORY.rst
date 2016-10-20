@@ -2,6 +2,9 @@
 
 History
 -------
+1.0.2 (2016-10-20)
+------------------
+* Added `_handle_graphql_errors` hook to GraphQLHandler
 
 1.0.1 (2016-09-28)
 ------------------

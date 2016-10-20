@@ -29,6 +29,7 @@ class GraphQLHandler(webapp2.RequestHandler):
         if result.errors:
             response['errors'] = [self.__format_error(e) for e in result.errors]
             logging.warn("Request had errors: %s", response)
+            self._handle_graphql_errors(result.errors)
 
         if result.invalid:
             logging.error("GraphQL request is invalid: %s", response)
@@ -47,6 +48,9 @@ class GraphQLHandler(webapp2.RequestHandler):
         self.failed_response(status_code, {
             'errors': [self.__format_error(exception)]
         })
+
+    def _handle_graphql_errors(self, result):
+        pass
 
     def _get_schema(self):
         return self.app.config.get('graphql_schema')
