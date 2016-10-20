@@ -14,14 +14,14 @@ class QueryRootType(graphene.ObjectType):
     default_greet = 'World'
 
     greet = graphene.Field(graphene.String, who=graphene.Argument(graphene.String))
-    resolverRaises = graphene.String()
+    resolver_raises = graphene.String()
 
     @graphene.resolve_only_args
     def resolve_greet(self, who):
         return 'Hello %s!' % who
 
     def resolve_resolver_raises(self, *_):
-        raise Exception()
+        raise Exception("TEST")
 
 
 class ChangeDefaultGreetingMutation(relay.ClientIDMutation):
@@ -189,3 +189,4 @@ class TestGraphQLHandler(BaseTest):
     def testPOST_stringBody_readsQueryFromBodyAndRestFromGET(self):
         response = self.app.post('/graphql?pretty=True', params='query helloYou { greet(who: "You") }')
         self.assertEqual(response.body, '{\n  "data": {\n    "greet": "Hello You!"\n  }\n}')
+
