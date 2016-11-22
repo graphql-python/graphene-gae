@@ -13,7 +13,7 @@ __author__ = 'ekampf'
 
 
 def connection_from_ndb_query(query, args=None, connection_type=None, edge_type=None, pageinfo_type=None,
-                              entities_mapper=None, entity_filter=None, context=None, **kwargs):
+                              transform_edges=None, context=None, **kwargs):
     '''
     A simple function that accepts an ndb Query and used ndb QueryIterator object(https://cloud.google.com/appengine/docs/python/ndb/queries#iterators)
     to returns a connection object for use in GraphQL.
@@ -56,16 +56,8 @@ def connection_from_ndb_query(query, args=None, connection_type=None, edge_type=
 
         edges.append(edge_type(node=entity, cursor=ndb_iter.cursor_after().urlsafe()))
 
-    if entities_mapper:
-        entities = [edge.node for edge in edges]
-        mapped_entities = entities_mapper(entities, args, context)
-        if len(entities) != len(mapped_entities):
-            raise Exception('entities_mapper must return a list of equal size to the list it received')
-
-        edges = [edge_type(node=mapped_entity, cursor=edge.cursor) for mapped_entity, edge in zip(mapped_entities, edges)]
-
-    if entity_filter:
-        edges = [edge for edge in edges if entity_filter(edge.node, args, context)]
+    if transform_edges:
+        edges = transform_edges(edges, args, context)
 
     try:
         end_cursor = ndb_iter.cursor_after().urlsafe()
@@ -85,7 +77,7 @@ def connection_from_ndb_query(query, args=None, connection_type=None, edge_type=
 
 
 class NdbConnectionField(relay.ConnectionField):
-    def __init__(self, type, entities_mapper=None, entity_filter=None, *args, **kwargs):
+    def __init__(self, type, transform_edges=None, *args, **kwargs):
         super(NdbConnectionField, self).__init__(
             type,
             *args,
@@ -95,15 +87,14 @@ class NdbConnectionField(relay.ConnectionField):
             **kwargs
         )
 
-        self.entities_mapper = entities_mapper
-        self.entity_filter = entity_filter
+        self.transform_edges = transform_edges
 
     @property
     def model(self):
         return self.type._meta.node._meta.model
 
     @staticmethod
-    def connection_resolver(resolver, connection, model, entities_mapper, entity_filter, root, args, context, info):
+    def connection_resolver(resolver, connection, model, transform_edges, root, args, context, info):
         ndb_query = resolver(root, args, context, info)
         if ndb_query is None:
             ndb_query = model.query()
@@ -114,13 +105,12 @@ class NdbConnectionField(relay.ConnectionField):
             connection_type=connection,
             edge_type=connection.Edge,
             pageinfo_type=PageInfo,
-            entities_mapper=entities_mapper,
-            entity_filter=entity_filter,
+            transform_edges=transform_edges,
             context=context
         )
 
     def get_resolver(self, parent_resolver):
-        return partial(self.connection_resolver, parent_resolver, self.type, self.model, self.entities_mapper, self.entity_filter)
+        return partial(self.connection_resolver, parent_resolver, self.type, self.model, self.transform_edges)
 
 
 class DynamicNdbKeyStringField(Dynamic):

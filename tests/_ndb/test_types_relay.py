@@ -50,8 +50,16 @@ class CommentType(NdbObjectType):
         interfaces = (Node,)
 
 
-def readers_mapper(article_readers, args, context):
-    return ndb.get_multi([article_reader.reader_key for article_reader in article_readers])
+def transform_to_reader_edges(edges, args, context):
+    article_readers = [edge.node for edge in edges]
+    readers = ndb.get_multi([article_reader.reader_key for article_reader in article_readers])
+    transformed_edges = []
+    for edge, reader in zip(edges, readers):
+        if reader.is_alive:
+            edge.node = reader
+            transformed_edges.append(edge)
+
+    return transformed_edges
 
 
 def reader_filter(reader, args, context):
@@ -64,7 +72,7 @@ class ArticleType(NdbObjectType):
         interfaces = (Node,)
 
     comments = NdbConnectionField(CommentType)
-    readers = NdbConnectionField(ReaderType, entities_mapper=readers_mapper, entity_filter=reader_filter)
+    readers = NdbConnectionField(ReaderType, transform_edges=transform_to_reader_edges)
 
     @resolve_only_args
     def resolve_comments(self):
