@@ -50,11 +50,11 @@ class CommentType(NdbObjectType):
         interfaces = (Node,)
 
 
-def readers_mapper(article_readers, args, **kwargs):
+def readers_mapper(article_readers, args, context):
     return ndb.get_multi([article_reader.reader_key for article_reader in article_readers])
 
 
-def reader_filter(reader, args, **kwargs):
+def reader_filter(reader, args, context):
     return reader.is_alive
 
 

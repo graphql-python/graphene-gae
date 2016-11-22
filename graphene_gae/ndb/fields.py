@@ -13,7 +13,7 @@ __author__ = 'ekampf'
 
 
 def connection_from_ndb_query(query, args=None, connection_type=None, edge_type=None, pageinfo_type=None,
-                              entities_mapper=None, entity_filter=None, **kwargs):
+                              entities_mapper=None, entity_filter=None, context=None, **kwargs):
     '''
     A simple function that accepts an ndb Query and used ndb QueryIterator object(https://cloud.google.com/appengine/docs/python/ndb/queries#iterators)
     to returns a connection object for use in GraphQL.
@@ -58,14 +58,14 @@ def connection_from_ndb_query(query, args=None, connection_type=None, edge_type=
 
     if entities_mapper:
         entities = [edge.node for edge in edges]
-        mapped_entities = entities_mapper(entities, args, **kwargs)
+        mapped_entities = entities_mapper(entities, args, context)
         if len(entities) != len(mapped_entities):
             raise Exception('entities_mapper must return a list of equal size to the list it received')
 
         edges = [edge_type(node=mapped_entity, cursor=edge.cursor) for mapped_entity, edge in zip(mapped_entities, edges)]
 
     if entity_filter:
-        edges = [edge for edge in edges if entity_filter(edge.node, args, **kwargs)]
+        edges = [edge for edge in edges if entity_filter(edge.node, args, context)]
 
     try:
         end_cursor = ndb_iter.cursor_after().urlsafe()
@@ -115,7 +115,8 @@ class NdbConnectionField(relay.ConnectionField):
             edge_type=connection.Edge,
             pageinfo_type=PageInfo,
             entities_mapper=entities_mapper,
-            entity_filter=entity_filter
+            entity_filter=entity_filter,
+            context=context
         )
 
     def get_resolver(self, parent_resolver):
