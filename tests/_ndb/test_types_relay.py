@@ -50,14 +50,21 @@ class CommentType(NdbObjectType):
         interfaces = (Node,)
 
 
+def readers_mapper(article_readers, args, **kwargs):
+    return ndb.get_multi([article_reader.reader_key for article_reader in article_readers])
+
+
+def reader_filter(reader, args, **kwargs):
+    return reader.is_alive
+
+
 class ArticleType(NdbObjectType):
     class Meta:
         model = Article
         interfaces = (Node,)
 
     comments = NdbConnectionField(CommentType)
-    readers = NdbConnectionField(ReaderType, entities_mapper=lambda article_readers: ndb.get_multi(
-        [article_reader.reader_key for article_reader in article_readers]))
+    readers = NdbConnectionField(ReaderType, entities_mapper=readers_mapper, entity_filter=reader_filter)
 
     @resolve_only_args
     def resolve_comments(self):
@@ -266,6 +273,49 @@ class TestNDBTypesRelay(BaseTest):
         article_key = Article(headline="Test1", summary="1").put()
 
         ArticleReader(reader_key=reader_key, article_key=article_key).put()
+
+        result = schema.execute("""
+            query Articles {
+                articles {
+                    edges {
+                        node {
+                            readers {
+                                edges {
+                                    cursor
+                                    node {
+                                        name
+                                        email
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+            """)
+
+        articles = result.data.get('articles', {}).get('edges')
+        self.assertLength(articles, 1)
+
+        article = articles[0]['node']
+
+        readers = article.get('readers', {}).get('edges')
+        self.assertLength(readers, 1)
+
+        reader = readers[0]['node']
+
+        self.assertLength(reader.keys(), 2)
+        self.assertIsNotNone(reader.get('name'))
+        self.assertIsNotNone(reader.get('email'))
+
+    def test_connectionFieldWithEntitiesMapperAndEntityFilter(self):
+        alive_reader_key = Reader(name="Chuck Norris", email="gmail@chuckNorris.com").put()
+        dead_reader_key = Reader(name="John Doe", email="johndoe@gmail.com", is_alive=False).put()
+        article_key = Article(headline="Test1", summary="1").put()
+
+        ArticleReader(reader_key=alive_reader_key, article_key=article_key).put()
+        ArticleReader(reader_key=dead_reader_key, article_key=article_key).put()
 
         result = schema.execute("""
             query Articles {

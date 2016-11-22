@@ -17,6 +17,7 @@ class PhoneNumber(ndb.Model):
 class Reader(ndb.Model):
     name = ndb.StringProperty()
     email = ndb.StringProperty()
+    is_alive = ndb.BooleanProperty(default=True)
 
 
 class Author(ndb.Model):
