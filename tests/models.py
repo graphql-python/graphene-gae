@@ -14,6 +14,11 @@ class PhoneNumber(ndb.Model):
     number = ndb.StringProperty()
 
 
+class Reader(ndb.Model):
+    name = ndb.StringProperty()
+    email = ndb.StringProperty()
+
+
 class Author(ndb.Model):
     name = ndb.StringProperty()
     email = ndb.StringProperty()
@@ -29,6 +34,13 @@ class Comment(ndb.Model):
     created_at = ndb.DateTimeProperty(auto_now_add=True)
     updated_at = ndb.DateTimeProperty(auto_now=True)
     body = ndb.StringProperty()
+
+
+class ArticleReader(ndb.Model):
+    article_key = ndb.KeyProperty(kind='Article')
+    reader_key = ndb.KeyProperty(kind='Reader')
+
+    read_at = ndb.DateTimeProperty(auto_now_add=True)
 
 
 class Article(ndb.Model):

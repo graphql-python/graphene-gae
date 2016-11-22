@@ -9,7 +9,7 @@ from graphene.relay import Node
 from graphene_gae import NdbObjectType
 from graphene_gae.ndb.fields import NdbConnectionField
 
-from tests.models import Tag, Comment, Article, Author, Address, PhoneNumber
+from tests.models import Tag, Comment, Article, Author, Address, PhoneNumber, Reader, ArticleReader
 
 __author__ = 'ekampf'
 
@@ -23,6 +23,12 @@ class AddressType(NdbObjectType):
 class PhoneNumberType(NdbObjectType):
     class Meta:
         model = PhoneNumber
+        interfaces = (Node,)
+
+
+class ReaderType(NdbObjectType):
+    class Meta:
+        model = Reader
         interfaces = (Node,)
 
 
@@ -50,10 +56,16 @@ class ArticleType(NdbObjectType):
         interfaces = (Node,)
 
     comments = NdbConnectionField(CommentType)
+    readers = NdbConnectionField(ReaderType, entities_mapper=lambda article_readers: ndb.get_multi(
+        [article_reader.reader_key for article_reader in article_readers]))
 
     @resolve_only_args
     def resolve_comments(self):
         return Comment.query(ancestor=self.key)
+
+    @resolve_only_args
+    def resolve_readers(self):
+        return ArticleReader.query().filter(ArticleReader.article_key == self.key)
 
 
 class QueryRoot(graphene.ObjectType):
@@ -248,3 +260,44 @@ class TestNDBTypesRelay(BaseTest):
 
     def test_connectionField_model(self):
         self.assertEqual(NdbConnectionField(CommentType).model, Comment)
+
+    def test_connectionFieldWithEntitiesMapper(self):
+        reader_key = Reader(name="Chuck Norris", email="gmail@chuckNorris.com").put()
+        article_key = Article(headline="Test1", summary="1").put()
+
+        ArticleReader(reader_key=reader_key, article_key=article_key).put()
+
+        result = schema.execute("""
+            query Articles {
+                articles {
+                    edges {
+                        node {
+                            readers {
+                                edges {
+                                    cursor
+                                    node {
+                                        name
+                                        email
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+            """)
+
+        articles = result.data.get('articles', {}).get('edges')
+        self.assertLength(articles, 1)
+
+        article = articles[0]['node']
+
+        readers = article.get('readers', {}).get('edges')
+        self.assertLength(readers, 1)
+
+        reader = readers[0]['node']
+
+        self.assertLength(reader.keys(), 2)
+        self.assertIsNotNone(reader.get('name'))
+        self.assertIsNotNone(reader.get('email'))

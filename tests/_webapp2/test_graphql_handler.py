@@ -40,6 +40,7 @@ class ChangeDefaultGreetingMutation(relay.ClientIDMutation):
 class MutationRootType(graphene.ObjectType):
     changeDefaultGreeting = ChangeDefaultGreetingMutation.Field()
 
+
 schema = graphene.Schema(query=QueryRootType, mutation=MutationRootType)
 
 graphql_application.config['graphql_schema'] = schema
