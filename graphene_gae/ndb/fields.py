@@ -12,6 +12,32 @@ from graphene.relay.connection import PageInfo
 __author__ = 'ekampf'
 
 
+def generate_edges_page(ndb_iter, page_size, keys_only, edge_type):
+    edges = []
+    timeouts = 0
+    while len(edges) < page_size:
+        try:
+            entity = ndb_iter.next()
+        except StopIteration:
+            break
+        except Timeout:
+            timeouts += 1
+            if timeouts > 2:
+                break
+
+            continue
+        except ndb.DeadlineExceededError:
+            break
+
+        if keys_only:
+            # entity is actualy an ndb.Key and we need to create an empty entity to hold it
+            entity = edge_type._meta.fields['node']._type._meta.model(key=entity)
+
+        edges.append(edge_type(node=entity, cursor=ndb_iter.cursor_after().urlsafe()))
+
+    return edges
+
+
 def connection_from_ndb_query(query, args=None, connection_type=None, edge_type=None, pageinfo_type=None,
                               transform_edges=None, context=None, **kwargs):
     '''
@@ -36,28 +62,15 @@ def connection_from_ndb_query(query, args=None, connection_type=None, edge_type=
 
     ndb_iter = query.iter(produce_cursors=True, start_cursor=start_cursor, batch_size=batch_size, keys_only=keys_only, projection=query.projection)
 
-    timeouts = 0
     edges = []
     while len(edges) < page_size:
-        try:
-            entity = ndb_iter.next()
-        except StopIteration:
+        missing_edges_count = page_size - len(edges)
+        edges_page = generate_edges_page(ndb_iter, missing_edges_count, keys_only, edge_type)
+
+        edges.extend(transform_edges(edges_page, args, context) if transform_edges else edges_page)
+
+        if len(edges_page) < missing_edges_count:
             break
-        except Timeout:
-            timeouts += 1
-            if timeouts > 2:
-                break
-
-            continue
-
-        if keys_only:
-            # entity is actualy an ndb.Key and we need to create an empty entity to hold it
-            entity = edge_type._meta.fields['node']._type._meta.model(key=entity)
-
-        edges.append(edge_type(node=entity, cursor=ndb_iter.cursor_after().urlsafe()))
-
-    if transform_edges:
-        edges = transform_edges(edges, args, context)
 
     try:
         end_cursor = ndb_iter.cursor_after().urlsafe()
