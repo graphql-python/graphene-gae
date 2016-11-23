@@ -26,6 +26,8 @@ def generate_edges_page(ndb_iter, page_size, keys_only, edge_type):
                 break
 
             continue
+        except ndb.DeadlineExceededError:
+            break
 
         if keys_only:
             # entity is actualy an ndb.Key and we need to create an empty entity to hold it
