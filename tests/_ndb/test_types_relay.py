@@ -78,9 +78,8 @@ class ArticleType(NdbObjectType):
     def resolve_comments(self):
         return Comment.query(ancestor=self.key)
 
-    @resolve_only_args
-    def resolve_readers(self):
-        return ArticleReader.query().filter(ArticleReader.article_key == self.key)
+    def resolve_readers(self, args, context, info):
+        return ArticleReader.query().filter(ArticleReader.article_key == self.key).order(ArticleReader.key)
 
 
 class QueryRoot(graphene.ObjectType):
@@ -276,48 +275,7 @@ class TestNDBTypesRelay(BaseTest):
     def test_connectionField_model(self):
         self.assertEqual(NdbConnectionField(CommentType).model, Comment)
 
-    def test_connectionFieldWithEntitiesMapper(self):
-        reader_key = Reader(name="Chuck Norris", email="gmail@chuckNorris.com").put()
-        article_key = Article(headline="Test1", summary="1").put()
-
-        ArticleReader(reader_key=reader_key, article_key=article_key).put()
-
-        result = schema.execute("""
-            query Articles {
-                articles {
-                    edges {
-                        node {
-                            readers {
-                                edges {
-                                    cursor
-                                    node {
-                                        name
-                                        email
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
-            """)
-
-        articles = result.data.get('articles', {}).get('edges')
-        self.assertLength(articles, 1)
-
-        article = articles[0]['node']
-
-        readers = article.get('readers', {}).get('edges')
-        self.assertLength(readers, 1)
-
-        reader = readers[0]['node']
-
-        self.assertLength(reader.keys(), 2)
-        self.assertIsNotNone(reader.get('name'))
-        self.assertIsNotNone(reader.get('email'))
-
-    def test_connectionFieldWithEntitiesMapperAndEntityFilter(self):
+    def test_connectionFieldWithTransformEdges(self):
         alive_reader_key = Reader(name="Chuck Norris", email="gmail@chuckNorris.com").put()
         dead_reader_key = Reader(name="John Doe", email="johndoe@gmail.com", is_alive=False).put()
         article_key = Article(headline="Test1", summary="1").put()
@@ -359,3 +317,49 @@ class TestNDBTypesRelay(BaseTest):
         self.assertLength(reader.keys(), 2)
         self.assertIsNotNone(reader.get('name'))
         self.assertIsNotNone(reader.get('email'))
+
+    def test_connectionFieldWithTransformEdges_continualEdgeGeneration(self):
+        dead1_reader_key = Reader(name="John Doe 1", email="johndoe@gmail.com", is_alive=False).put()
+        dead2_reader_key = Reader(name="John Doe 2", email="johndoe@gmail.com", is_alive=False).put()
+        alive_reader_key = Reader(name="Chuck Norris", email="gmail@chuckNorris.com").put()
+        article_key = Article(headline="Test1", summary="1").put()
+
+        ArticleReader(reader_key=dead1_reader_key, article_key=article_key).put()
+        ArticleReader(reader_key=dead2_reader_key, article_key=article_key).put()
+        ArticleReader(reader_key=alive_reader_key, article_key=article_key).put()
+
+        result = schema.execute("""
+            query Articles {
+                articles {
+                    edges {
+                        node {
+                            readers(first:1) {
+                                edges {
+                                    cursor
+                                    node {
+                                        ndbId
+                                        name
+                                        email
+                                        isAlive
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+            """)
+
+        articles = result.data.get('articles', {}).get('edges')
+        self.assertLength(articles, 1)
+
+        article = articles[0]['node']
+
+        readers = article.get('readers', {}).get('edges')
+        self.assertLength(readers, 1)
+
+        reader = readers[0]['node']
+
+        self.assertLength(reader.keys(), 4)
+        self.assertEquals(reader['ndbId'], str(alive_reader_key.id()))
