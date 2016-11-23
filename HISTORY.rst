@@ -2,6 +2,10 @@
 
 History
 -------
+1.0.4 (2016-11-23)
+------------------
+* Improved behavior of `NdbConnectionField` when `transform_edges` also filters out some edges ([PR #26](https://github.com/graphql-python/graphene-gae/pull/25))
+
 1.0.3 (2016-11-22)
 ------------------
 * Added `transform_edges` to `NdbConnectionField` ([PR #25](https://github.com/graphql-python/graphene-gae/pull/25))
