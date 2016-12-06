@@ -2,6 +2,10 @@
 
 History
 -------
+1.0.6 (2016-12-06)
+------------------
+* Fixed DeadlineExceededError import swo connections properly handle timeouts
+
 1.0.5 (2016-11-23)
 ------------------
 * Improved behavior of `NdbConnectionField` when `transform_edges` also filters out some edges ([PR #26](https://github.com/graphql-python/graphene-gae/pull/25))

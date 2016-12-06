@@ -3,11 +3,13 @@ import six
 
 from google.appengine.ext import ndb
 from google.appengine.ext.db import BadArgumentError, Timeout
+from google.appengine.runtime import DeadlineExceededError
 
 from graphql_relay import to_global_id
 from graphql_relay.connection.connectiontypes import Edge
 from graphene import relay, Argument, Boolean, Int, String, Field, List, NonNull, Dynamic
 from graphene.relay.connection import PageInfo
+
 
 __author__ = 'ekampf'
 
@@ -26,7 +28,7 @@ def generate_edges_page(ndb_iter, page_size, keys_only, edge_type):
                 break
 
             continue
-        except ndb.DeadlineExceededError:
+        except DeadlineExceededError:
             break
 
         if keys_only:
