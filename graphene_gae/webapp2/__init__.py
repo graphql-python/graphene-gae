@@ -23,7 +23,8 @@ class GraphQLHandler(webapp2.RequestHandler):
                                 operation_name=operation_name,
                                 variable_values=variables,
                                 context_value=self._get_context(),
-                                root_value=self._get_root_value())
+                                root_value=self._get_root_value(),
+                                middleware=self._get_middleware())
 
         response = {}
         if result.errors:
@@ -89,6 +90,9 @@ class GraphQLHandler(webapp2.RequestHandler):
 
     def _get_context(self):
         return self.request
+
+    def _get_middleware(self):
+        return None
 
     def __format_error(self, error):
         if isinstance(error, GraphQLError):
