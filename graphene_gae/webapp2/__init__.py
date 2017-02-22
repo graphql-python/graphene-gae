@@ -9,7 +9,13 @@ __author__ = 'ekampf'
 
 
 class GraphQLHandler(webapp2.RequestHandler):
+    def get(self):
+        return self._handle_request()
+
     def post(self):
+        return self._handle_request()
+
+    def _handle_request(self):
         schema = self._get_schema()
         pretty = self._get_pretty()
 
