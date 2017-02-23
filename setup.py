@@ -55,16 +55,9 @@ test_requirements = [
     'webapp2==2.5.2',
     'webob==1.2.3',
     'WebTest==2.0.11',
-    'mock'
+    'mock',
+    'nose'
 ]
-
-
-def additional_tests():
-    setup_file = sys.modules['__main__'].__file__
-    setup_dir = os.path.abspath(os.path.dirname(setup_file))
-    print("*** Looking for tests in %s" % setup_dir)
-    return unittest.defaultTestLoader.discover(setup_dir)
-
 
 setup(
     name='graphene_gae',
@@ -90,6 +83,6 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
     ],
-    test_suite='setup.additional_tests',
-    tests_require=test_requirements
+    test_suite='discover_tests',
+    tests_require=test_requirements,
 )
