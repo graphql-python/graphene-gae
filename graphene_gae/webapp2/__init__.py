@@ -233,10 +233,10 @@ class GraphiqlHandler(webapp2.RequestHandler):
             onEditQuery: onEditQuery,
             onEditVariables: onEditVariables,
             onEditOperationName: onEditOperationName,
-            query: {{ query|tojson }},
-            response: {{ result|tojson }},
-            variables: {{ variables|tojson }},
-            operationName: {{ operation_name|tojson }},
+            query: {{ query|tojson|safe }},
+            response: {{ result|tojson|safe }},
+            variables: {{ variables|tojson|safe }},
+            operationName: {{ operation_name|tojson|safe }},
           }),
           document.body
         );
