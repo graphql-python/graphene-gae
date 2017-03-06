@@ -5,6 +5,7 @@ History
 1.0.7 (TBD)
 -----------
 * GraphQLHandler GET supoort ([PR #27](https://github.com/graphql-python/graphene-gae/pull/27))
+* GraphiQL Integration
 
 1.0.6 (2016-12-06)
 ------------------
