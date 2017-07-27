@@ -68,7 +68,7 @@ class GraphQLHandler(webapp2.RequestHandler):
     def _get_grapl_params(self):
         try:
             request_data = self.request.json_body
-            if isinstance(request_data, basestring):
+            if isinstance(request_data, six.string_types):
                 request_data = dict(query=request_data)
         except:
             request_data = {}

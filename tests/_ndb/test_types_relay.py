@@ -74,11 +74,10 @@ class ArticleType(NdbObjectType):
     comments = NdbConnectionField(CommentType)
     readers = NdbConnectionField(ReaderType, transform_edges=transform_to_reader_edges)
 
-    @resolve_only_args
     def resolve_comments(self):
         return Comment.query(ancestor=self.key)
 
-    def resolve_readers(self, args, context, info):
+    def resolve_readers(self, **args):
         return ArticleReader.query().filter(ArticleReader.article_key == self.key).order(ArticleReader.key)
 
 

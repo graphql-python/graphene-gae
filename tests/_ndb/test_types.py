@@ -44,7 +44,6 @@ class ArticleType(NdbObjectType):
 class QueryRoot(graphene.ObjectType):
     articles = graphene.List(ArticleType)
 
-    @graphene.resolve_only_args
     def resolve_articles(self):
         return Article.query()
 
@@ -127,7 +126,6 @@ class TestNDBTypes(BaseTest):
         class QueryType(graphene.ObjectType):
             articles = graphene.List(ArticleType)
 
-            @graphene.resolve_only_args
             def resolve_articles(self):
                 return Article.query()
 
@@ -154,7 +152,6 @@ class TestNDBTypes(BaseTest):
         class QueryType(graphene.ObjectType):
             articles = graphene.List(ArticleType)
 
-            @graphene.resolve_only_args
             def resolve_articles(self):
                 return Article.query()
 

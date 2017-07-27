@@ -23,7 +23,7 @@ def rreplace(s, old, new, occurrence):
     return new.join(li)
 
 
-def convert_ndb_scalar_property(graphene_type, ndb_prop, **kwargs):
+def convert_ndb_scalar_property(graphene_type, ndb_prop, registry=None, **kwargs):
     kwargs['description'] = "%s %s property" % (ndb_prop._name, graphene_type)
     _type = graphene_type
 
@@ -36,31 +36,31 @@ def convert_ndb_scalar_property(graphene_type, ndb_prop, **kwargs):
     return Field(_type, **kwargs)
 
 
-def convert_ndb_string_property(ndb_prop):
+def convert_ndb_string_property(ndb_prop, registry=None):
     return convert_ndb_scalar_property(String, ndb_prop)
 
 
-def convert_ndb_boolean_property(ndb_prop):
+def convert_ndb_boolean_property(ndb_prop, registry=None):
     return convert_ndb_scalar_property(Boolean, ndb_prop)
 
 
-def convert_ndb_int_property(ndb_prop):
+def convert_ndb_int_property(ndb_prop, registry=None):
     return convert_ndb_scalar_property(Int, ndb_prop)
 
 
-def convert_ndb_float_property(ndb_prop):
+def convert_ndb_float_property(ndb_prop, registry=None):
     return convert_ndb_scalar_property(Float, ndb_prop)
 
 
-def convert_ndb_json_property(ndb_prop):
+def convert_ndb_json_property(ndb_prop, registry=None):
     return Field(JSONString, description=ndb_prop._name)
 
 
-def convert_ndb_datetime_property(ndb_prop):
+def convert_ndb_datetime_property(ndb_prop, registry=None):
     return Field(DateTime, description=ndb_prop._name)
 
 
-def convert_ndb_key_propety(ndb_key_prop):
+def convert_ndb_key_propety(ndb_key_prop, registry=None):
     """
     Two conventions for handling KeyProperties:
     #1.
@@ -94,20 +94,19 @@ def convert_ndb_key_propety(ndb_key_prop):
         resolved_prop_name = name
 
     return [
-        ConversionResult(name=string_prop_name, field=DynamicNdbKeyStringField(ndb_key_prop)),
-        ConversionResult(name=resolved_prop_name, field=DynamicNdbKeyReferenceField(ndb_key_prop))
+        ConversionResult(name=string_prop_name, field=DynamicNdbKeyStringField(ndb_key_prop, registry=registry)),
+        ConversionResult(name=resolved_prop_name, field=DynamicNdbKeyReferenceField(ndb_key_prop, registry=registry))
     ]
 
 
-def convert_local_structured_property(ndb_structured_property):
+def convert_local_structured_property(ndb_structured_property, registry=None):
     is_required = ndb_structured_property._required
     is_repeated = ndb_structured_property._repeated
     model = ndb_structured_property._modelclass
     name = ndb_structured_property._code_name
 
     def dynamic_type():
-        from .types import NdbObjectTypeMeta
-        _type = NdbObjectTypeMeta.REGISTRY.get(model.__name__)
+        _type = registry.get_type_for_model(model)
         if not _type:
             return None
 
@@ -123,7 +122,7 @@ def convert_local_structured_property(ndb_structured_property):
     return ConversionResult(name=name, field=field)
 
 
-def convert_computed_property(ndb_computed_prop):
+def convert_computed_property(ndb_computed_prop, registry=None):
     return convert_ndb_scalar_property(String, ndb_computed_prop)
 
 
@@ -143,12 +142,12 @@ converters = {
 }
 
 
-def convert_ndb_property(prop):
+def convert_ndb_property(prop, registry=None):
     converter_func = converters.get(type(prop))
     if not converter_func:
         raise Exception("Don't know how to convert NDB field %s (%s)" % (prop._code_name, prop))
 
-    field = converter_func(prop)
+    field = converter_func(prop, registry)
     if not field:
         raise Exception("Failed to convert NDB propeerty to a GraphQL field %s (%s)" % (prop._code_name, prop))
 

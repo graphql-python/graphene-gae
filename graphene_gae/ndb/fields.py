@@ -7,8 +7,12 @@ from google.appengine.runtime import DeadlineExceededError
 
 from graphql_relay import to_global_id
 from graphql_relay.connection.connectiontypes import Edge
-from graphene import relay, Argument, Boolean, Int, String, Field, List, NonNull, Dynamic
-from graphene.relay.connection import PageInfo
+from graphene import Argument, Boolean, Int, String, Field, List, NonNull, Dynamic
+from graphene.relay import Connection
+from graphene.relay.connection import PageInfo, ConnectionField
+
+
+from .registry import get_global_registry
 
 
 __author__ = 'ekampf'
@@ -49,7 +53,7 @@ def connection_from_ndb_query(query, args=None, connection_type=None, edge_type=
     so pagination will only work if the array is static.
     '''
     args = args or {}
-    connection_type = connection_type or relay.Connection
+    connection_type = connection_type or Connection
     edge_type = edge_type or Edge
     pageinfo_type = pageinfo_type or PageInfo
 
@@ -91,7 +95,7 @@ def connection_from_ndb_query(query, args=None, connection_type=None, edge_type=
     )
 
 
-class NdbConnectionField(relay.ConnectionField):
+class NdbConnectionField(ConnectionField):
     def __init__(self, type, transform_edges=None, *args, **kwargs):
         super(NdbConnectionField, self).__init__(
             type,
@@ -103,6 +107,16 @@ class NdbConnectionField(relay.ConnectionField):
         )
 
         self.transform_edges = transform_edges
+
+    @property
+    def type(self):
+        from .types import NdbObjectType
+        _type = super(ConnectionField, self).type
+        assert issubclass(_type, NdbObjectType), (
+            "NdbConnectionField only accepts NdbObjectType types"
+        )
+        assert _type._meta.connection, "The type {} doesn't have a connection".format(_type.__name__)
+        return _type._meta.connection
 
     @property
     def model(self):
@@ -129,18 +143,19 @@ class NdbConnectionField(relay.ConnectionField):
 
 
 class DynamicNdbKeyStringField(Dynamic):
-    def __init__(self, ndb_key_prop, *args, **kwargs):
+    def __init__(self, ndb_key_prop, registry=None, *args, **kwargs):
         kind = ndb_key_prop._kind
+        if not registry:
+            registry = get_global_registry()
 
         def get_type():
-            from .types import NdbObjectTypeMeta
             kind_name = kind if isinstance(kind, six.string_types) else kind.__name__
 
-            if not NdbObjectTypeMeta.REGISTRY.get(kind_name):
+            _type = registry.get_type_for_model_name(kind_name)
+            if not _type:
                 return None
 
-            global_type_name = NdbObjectTypeMeta.REGISTRY[kind_name].__name__
-            return NdbKeyStringField(ndb_key_prop, global_type_name)
+            return NdbKeyStringField(ndb_key_prop, _type._meta.name)
 
         super(DynamicNdbKeyStringField, self).__init__(
             get_type,
@@ -149,13 +164,15 @@ class DynamicNdbKeyStringField(Dynamic):
 
 
 class DynamicNdbKeyReferenceField(Dynamic):
-    def __init__(self, ndb_key_prop, *args, **kwargs):
+    def __init__(self, ndb_key_prop, registry=None, *args, **kwargs):
         kind = ndb_key_prop._kind
+        if not registry:
+            registry = get_global_registry()
 
         def get_type():
-            from .types import NdbObjectTypeMeta
             kind_name = kind if isinstance(kind, six.string_types) else kind.__name__
-            _type = NdbObjectTypeMeta.REGISTRY.get(kind_name)
+
+            _type = registry.get_type_for_model_name(kind_name)
             if not _type:
                 return None
 
