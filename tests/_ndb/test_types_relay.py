@@ -1,5 +1,3 @@
-from graphene import resolve_only_args
-
 from tests.base_test import BaseTest
 
 from google.appengine.ext import ndb

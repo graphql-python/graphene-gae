@@ -89,7 +89,6 @@ class TestNDBConverter(BaseTest):
         self.__assert_conversion(ndb.JsonProperty, JSONString)
 
     def testKeyProperty_withSuffix(self):
-
         my_registry = Registry()
 
         class User(ndb.Model):
@@ -120,7 +119,6 @@ class TestNDBConverter(BaseTest):
         self.assertEqual(_type._type, UserType)
 
     def testKeyProperty_withSuffix_repeated(self):
-
         my_registry = Registry()
 
         class User(ndb.Model):
@@ -186,6 +184,7 @@ class TestNDBConverter(BaseTest):
 
     def testKeyProperty_withoutSuffix(self):
         my_registry = Registry()
+
         class User(ndb.Model):
             name = ndb.StringProperty()
 

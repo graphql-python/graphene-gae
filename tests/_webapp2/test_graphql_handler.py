@@ -16,11 +16,10 @@ class QueryRootType(graphene.ObjectType):
     greet = graphene.Field(graphene.String, who=graphene.Argument(graphene.String))
     resolver_raises = graphene.String()
 
-    @graphene.resolve_only_args
     def resolve_greet(self, who):
         return 'Hello %s!' % who
 
-    def resolve_resolver_raises(self, *_):
+    def resolve_resolver_raises(self):
         raise Exception("TEST")
 
 

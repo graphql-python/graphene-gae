@@ -1,7 +1,7 @@
 from google.appengine.ext import ndb
 
 import graphene
-from graphene import relay, resolve_only_args
+from graphene import relay
 from graphene_gae import NdbObjectType, NdbConnectionField
 
 from .data import create_ship
@@ -30,7 +30,7 @@ class Faction(NdbObjectType):
 
     ships = NdbConnectionField(Ship)
 
-    def resolve_ships(self, *_):
+    def resolve_ships(self, **args):
         return ShipModel.query().filter(ShipModel.faction_key == self.key)
 
 
@@ -58,15 +58,12 @@ class Query(graphene.ObjectType):
     node = relay.Node.Field()
     ships = NdbConnectionField(Ship)
 
-    @resolve_only_args
-    def resolve_ships(self):
+    def resolve_ships(self, **args):
         return ShipModel.query()
 
-    @resolve_only_args
     def resolve_rebels(self):
         return FactionModel.get_by_id("rebels")
 
-    @resolve_only_args
     def resolve_empire(self):
         return FactionModel.get_by_id("empire")
 
