@@ -7,7 +7,7 @@ from google.appengine.runtime import DeadlineExceededError
 
 from graphql_relay import to_global_id
 from graphql_relay.connection.connectiontypes import Edge
-from graphene import Argument, Boolean, Int, String, Field, List, NonNull, Dynamic
+from graphene import Argument, Boolean, Int, String, Field, List, NonNull, Dynamic, final_resolver
 from graphene.relay import Connection
 from graphene.relay.connection import PageInfo, ConnectionField
 
@@ -139,7 +139,9 @@ class NdbConnectionField(ConnectionField):
         )
 
     def get_resolver(self, parent_resolver):
-        return partial(self.connection_resolver, parent_resolver, self.type, self.model, self.transform_edges)
+        return final_resolver(partial(
+            self.connection_resolver, parent_resolver, self.type, self.model, self.transform_edges
+        ))
 
 
 class DynamicNdbKeyStringField(Dynamic):
@@ -204,8 +206,8 @@ class NdbKeyStringField(Field):
 
         super(NdbKeyStringField, self).__init__(_type, *args, **kwargs)
 
-    def resolve_key_to_string(self, entity, args, context, info):
-        is_global_id = not args.get('ndb', False)
+    def resolve_key_to_string(self, entity, ndb=False):
+        is_global_id = not ndb
         key_value = self.__ndb_key_prop._get_user_value(entity)
         if not key_value:
             return None
@@ -235,7 +237,7 @@ class NdbKeyReferenceField(Field):
 
         super(NdbKeyReferenceField, self).__init__(_type, *args, **kwargs)
 
-    def resolve_key_reference(self, entity, args, context, info):
+    def resolve_key_reference(self, entity):
         key_value = self.__ndb_key_prop._get_user_value(entity)
         if not key_value:
             return None
