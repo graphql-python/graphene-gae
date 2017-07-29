@@ -104,7 +104,7 @@ class NdbObjectType(ObjectType):
             registry.register(cls)
 
     @classmethod
-    def is_type_of(cls, root, context, info):
+    def is_type_of(cls, root, info):
         if isinstance(root, cls):
             return True
 
@@ -125,5 +125,5 @@ class NdbObjectType(ObjectType):
         return key.get()
 
     @classmethod
-    def resolve_id(cls, entity):
+    def resolve_id(cls, entity, info):
         return entity.key.urlsafe()

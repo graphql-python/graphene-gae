@@ -30,7 +30,7 @@ class Faction(NdbObjectType):
 
     ships = NdbConnectionField(Ship)
 
-    def resolve_ships(self, **args):
+    def resolve_ships(self, info, **args):
         return ShipModel.query().filter(ShipModel.faction_key == self.key)
 
 
@@ -43,7 +43,7 @@ class IntroduceShip(relay.ClientIDMutation):
     faction = graphene.Field(Faction)
 
     @classmethod
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, info, **input):
         ship_name = input.get('ship_name')
         faction_id = input.get('faction_id')
         faction_key = ndb.Key(FactionModel, faction_id)
@@ -58,13 +58,13 @@ class Query(graphene.ObjectType):
     node = relay.Node.Field()
     ships = NdbConnectionField(Ship)
 
-    def resolve_ships(self, **args):
+    def resolve_ships(self, info, **args):
         return ShipModel.query()
 
-    def resolve_rebels(self):
+    def resolve_rebels(self, info):
         return FactionModel.get_by_id("rebels")
 
-    def resolve_empire(self):
+    def resolve_empire(self, info):
         return FactionModel.get_by_id("empire")
 
 
