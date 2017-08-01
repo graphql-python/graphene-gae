@@ -114,7 +114,7 @@ class NdbObjectType(ObjectType):
         return type(root) == cls._meta.model
 
     @classmethod
-    def get_node(cls, urlsafe_key, *_):
+    def get_node(cls, info, urlsafe_key):
         try:
             key = ndb.Key(urlsafe=urlsafe_key)
         except:

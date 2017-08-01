@@ -43,9 +43,7 @@ class IntroduceShip(relay.ClientIDMutation):
     faction = graphene.Field(Faction)
 
     @classmethod
-    def mutate_and_get_payload(cls, info, **input):
-        ship_name = input.get('ship_name')
-        faction_id = input.get('faction_id')
+    def mutate_and_get_payload(cls, root, info, ship_name, faction_id, client_mutation_id=None):
         faction_key = ndb.Key(FactionModel, faction_id)
         ship = create_ship(ship_name, faction_key)
         faction = faction_key.get()
