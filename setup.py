@@ -46,7 +46,7 @@ with open('HISTORY.rst') as history_file:
 requirements = [
     'six>=1.10.0',
     'inflect==0.2.5',
-    'graphene>=1.0',
+    'graphene>=2.0.dev',
     'iso8601'
 ]
 
@@ -55,7 +55,7 @@ test_requirements = [
     'webapp2==2.5.2',
     'webob==1.2.3',
     'WebTest==2.0.11',
-    'mock',
+    'mock==2.0.0',
     'nose'
 ]
 

@@ -16,11 +16,10 @@ class QueryRootType(graphene.ObjectType):
     greet = graphene.Field(graphene.String, who=graphene.Argument(graphene.String))
     resolver_raises = graphene.String()
 
-    @graphene.resolve_only_args
-    def resolve_greet(self, who):
+    def resolve_greet(self, info, who):
         return 'Hello %s!' % who
 
-    def resolve_resolver_raises(self, *_):
+    def resolve_resolver_raises(self, info):
         raise Exception("TEST")
 
 
@@ -32,7 +31,7 @@ class ChangeDefaultGreetingMutation(relay.ClientIDMutation):
     defaultGreeting = graphene.String()
 
     @classmethod
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, **input):
         QueryRootType.default_greet = input.get('value')
         return ChangeDefaultGreetingMutation(ok=True, defaultGreeting=QueryRootType.default_greet)
 

@@ -1,108 +1,120 @@
 import inspect
-import six
 from collections import OrderedDict
 
 from google.appengine.ext import ndb
 
-from graphene import ObjectType, Field, String
-from graphene.types.objecttype import ObjectTypeMeta, merge, yank_fields_from_attrs
-from graphene.utils.is_base_type import is_base_type
-from graphene.types.options import Options
+from graphene import Field, ID  # , annotate, ResolveInfo
+from graphene.relay import Connection, Node
+from graphene.types.objecttype import ObjectType, ObjectTypeOptions
+from graphene.types.utils import yank_fields_from_attrs
 
-from graphene_gae.ndb.converter import convert_ndb_property
+from .converter import convert_ndb_property
+from .registry import Registry, get_global_registry
+
 
 __author__ = 'ekampf'
 
 
-class NdbObjectTypeMeta(ObjectTypeMeta):
-    REGISTRY = {}  # Maps between ndb.Model to its GraphQL type
+def fields_for_ndb_model(ndb_model, registry, only_fields, exclude_fields):
+    ndb_fields = OrderedDict()
+    for prop_name, prop in ndb_model._properties.iteritems():
+        name = prop._code_name
 
-    def __new__(mcs, name, bases, attrs):
-        if not is_base_type(bases, NdbObjectTypeMeta):
-            return type.__new__(mcs, name, bases, attrs)
+        is_not_in_only = only_fields and name not in only_fields
+        is_excluded = name in exclude_fields  # or name in already_created_fields
+        if is_not_in_only or is_excluded:
+            continue
 
-        options = Options(
-            attrs.pop('Meta', None),
-            name=name,
-            description=attrs.pop('__doc__', None),
-            model=None,
-            local_fields=None,
-            only_fields=(),
-            exclude_fields=(),
-            interfaces=(),
-            registry=None
-        )
+        results = convert_ndb_property(prop, registry)
+        if not results:
+            continue
 
-        if not options.model:
-            raise Exception('NdbObjectType %s must have a model in the Meta class attr' % name)
+        if not isinstance(results, list):
+            results = [results]
 
-        if not inspect.isclass(options.model) or not issubclass(options.model, ndb.Model):
-            raise Exception('Provided model in %s is not an NDB model' % name)
+        for r in results:
+            ndb_fields[r.name] = r.field
 
-        new_cls = ObjectTypeMeta.__new__(mcs, name, bases, dict(attrs, _meta=options))
-        mcs.register(new_cls)
+    return ndb_fields
 
-        ndb_fields = mcs.fields_for_ndb_model(options)
-        options.ndb_fields = yank_fields_from_attrs(
+
+class NdbObjectTypeOptions(ObjectTypeOptions):
+    model = None  # type: Model
+    registry = None  # type: Registry
+    connection = None  # type: Type[Connection]
+    id = None  # type: str
+
+
+class NdbObjectType(ObjectType):
+    class Meta:
+        abstract = True
+
+    ndb_id = ID(resolver=lambda entity, *_: str(entity.key.id()))
+
+    @classmethod
+    def __init_subclass_with_meta__(cls, model=None, registry=None, skip_registry=False,
+                                    only_fields=(), exclude_fields=(), connection=None,
+                                    use_connection=None, interfaces=(), **options):
+
+        if not model:
+            raise Exception((
+                'NdbObjectType {name} must have a model in the Meta class attr'
+            ).format(name=cls.__name__))
+
+        if not inspect.isclass(model) or not issubclass(model, ndb.Model):
+            raise Exception((
+                'Provided model in {name} is not an NDB model'
+            ).format(name=cls.__name__))
+
+        if not registry:
+            registry = get_global_registry()
+
+        assert isinstance(registry, Registry), (
+            'The attribute registry in {} needs to be an instance of '
+            'Registry, received "{}".'
+        ).format(cls.__name__, registry)
+
+        ndb_fields = fields_for_ndb_model(model, registry, only_fields, exclude_fields)
+        ndb_fields = yank_fields_from_attrs(
             ndb_fields,
             _as=Field,
         )
-        options.fields = merge(
-            options.interface_fields,
-            options.ndb_fields,
-            options.base_fields,
-            options.local_fields
-        )
 
-        return new_cls
+        if use_connection is None and interfaces:
+            use_connection = any((issubclass(interface, Node) for interface in interfaces))
+
+        if use_connection and not connection:
+            # We create the connection automatically
+            connection = Connection.create_type('{}Connection'.format(cls.__name__), node=cls)
+
+        if connection is not None:
+            assert issubclass(connection, Connection), (
+                "The connection must be a Connection. Received {}"
+            ).format(connection.__name__)
+
+        _meta = NdbObjectTypeOptions(cls)
+        _meta.model = model
+        _meta.registry = registry
+        _meta.fields = ndb_fields
+        _meta.connection = connection
+
+        super(NdbObjectType, cls).__init_subclass_with_meta__(_meta=_meta, interfaces=interfaces, **options)
+
+        if not skip_registry:
+            registry.register(cls)
 
     @classmethod
-    def register(mcs, object_type_meta):
-        mcs.REGISTRY[object_type_meta._meta.model.__name__] = object_type_meta
-
-    @staticmethod
-    def fields_for_ndb_model(options):
-        ndb_model = options.model
-        only_fields = options.only_fields
-        already_created_fields = {name for name, _ in options.local_fields.iteritems()}
-
-        ndb_fields = OrderedDict()
-        for prop_name, prop in ndb_model._properties.iteritems():
-            name = prop._code_name
-
-            is_not_in_only = only_fields and name not in only_fields
-            is_excluded = name in options.exclude_fields or name in already_created_fields
-            if is_not_in_only or is_excluded:
-                continue
-
-            results = convert_ndb_property(prop)
-            if not results:
-                continue
-
-            if not isinstance(results, list):
-                results = [results]
-
-            for r in results:
-                ndb_fields[r.name] = r.field
-
-        ndb_fields['ndb_id'] = Field(String, resolver=lambda entity, *_: str(entity.key.id()))
-
-        return ndb_fields
-
-
-class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, ObjectType)):
-    @classmethod
-    def is_type_of(cls, root, context, info):
+    def is_type_of(cls, root, info):
         if isinstance(root, cls):
             return True
 
-        if not cls.is_valid_ndb_model(type(root)):
+        if not isinstance(root, ndb.Model):
             raise Exception(('Received incompatible instance "{}".').format(root))
 
         return type(root) == cls._meta.model
 
     @classmethod
-    def get_node(cls, urlsafe_key, *_):
+    def get_node(cls, info, urlsafe_key):
         try:
             key = ndb.Key(urlsafe=urlsafe_key)
         except:
@@ -113,10 +125,5 @@ class NdbObjectType(six.with_metaclass(NdbObjectTypeMeta, ObjectType)):
         return key.get()
 
     @classmethod
-    def resolve_id(cls, entity, args, context, info):
+    def resolve_id(cls, entity, info):
         return entity.key.urlsafe()
-
-    @staticmethod
-    def is_valid_ndb_model(model):
-        return inspect.isclass(model) and issubclass(model, ndb.Model)
-

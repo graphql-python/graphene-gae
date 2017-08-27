@@ -12,6 +12,7 @@ from graphene.types.datetime import DateTime
 
 from graphene_gae.ndb.fields import NdbKeyStringField, NdbKeyReferenceField, DynamicNdbKeyStringField, DynamicNdbKeyReferenceField
 from graphene_gae.ndb.converter import convert_ndb_property
+from graphene_gae.ndb.registry import Registry
 
 __author__ = 'ekampf'
 
@@ -38,7 +39,7 @@ class TestNDBConverter(BaseTest):
     @mock.patch('graphene_gae.ndb.converter.converters')
     def testNoneResult_raisesException(self, patch_convert):
         from graphene_gae.ndb.converter import convert_ndb_property
-        patch_convert.get.return_value = lambda _: None
+        patch_convert.get.return_value = lambda *_: None
         with self.assertRaises(Exception) as context:
             prop = ndb.StringProperty()
             prop._code_name = "my_prop"
@@ -88,17 +89,20 @@ class TestNDBConverter(BaseTest):
         self.__assert_conversion(ndb.JsonProperty, JSONString)
 
     def testKeyProperty_withSuffix(self):
+        my_registry = Registry()
+
         class User(ndb.Model):
             name = ndb.StringProperty()
 
         class UserType(NdbObjectType):
             class Meta:
                 model = User
+                registry = my_registry
 
         prop = ndb.KeyProperty(kind='User')
         prop._code_name = 'user_key'
 
-        conversion = convert_ndb_property(prop)
+        conversion = convert_ndb_property(prop, my_registry)
 
         self.assertLength(conversion, 2)
 
@@ -115,17 +119,20 @@ class TestNDBConverter(BaseTest):
         self.assertEqual(_type._type, UserType)
 
     def testKeyProperty_withSuffix_repeated(self):
+        my_registry = Registry()
+
         class User(ndb.Model):
             name = ndb.StringProperty()
 
         class UserType(NdbObjectType):
             class Meta:
                 model = User
+                registry = my_registry
 
         prop = ndb.KeyProperty(kind='User', repeated=True)
         prop._code_name = 'user_keys'
 
-        conversion = convert_ndb_property(prop)
+        conversion = convert_ndb_property(prop, my_registry)
 
         self.assertLength(conversion, 2)
 
@@ -147,14 +154,17 @@ class TestNDBConverter(BaseTest):
         class User(ndb.Model):
             name = ndb.StringProperty()
 
+        my_registry = Registry()
+
         class UserType(NdbObjectType):
             class Meta:
                 model = User
+                registry = my_registry
 
         prop = ndb.KeyProperty(kind='User', required=True)
         prop._code_name = 'user_key'
 
-        conversion = convert_ndb_property(prop)
+        conversion = convert_ndb_property(prop, my_registry)
 
         self.assertLength(conversion, 2)
 
@@ -173,17 +183,20 @@ class TestNDBConverter(BaseTest):
         self.assertEqual(_type._type.of_type, UserType)
 
     def testKeyProperty_withoutSuffix(self):
+        my_registry = Registry()
+
         class User(ndb.Model):
             name = ndb.StringProperty()
 
         class UserType(NdbObjectType):
             class Meta:
                 model = User
+                registry = my_registry
 
         prop = ndb.KeyProperty(kind='User')
         prop._code_name = 'user'
 
-        conversion = convert_ndb_property(prop)
+        conversion = convert_ndb_property(prop, my_registry)
 
         self.assertLength(conversion, 2)
 
