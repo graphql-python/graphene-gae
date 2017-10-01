@@ -111,6 +111,11 @@ class NdbObjectType(ObjectType):
         if not isinstance(root, ndb.Model):
             raise Exception(('Received incompatible instance "{}".').format(root))
 
+        # Returns True if `root` is a PolyModel subclass and `cls` is in the
+        # class hierarchy of `root` which is retrieved with `_class_key`
+        if hasattr(root, '_class_key') and cls._meta.model._get_kind() in root._class_key():
+            return True
+
         return type(root) == cls._meta.model
 
     @classmethod
