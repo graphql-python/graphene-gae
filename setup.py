@@ -16,7 +16,8 @@ def get_build_number():
     if os.path.isfile(fname):
         with open(fname) as f:
             build_number = f.read()
-            build_number = re.sub("[^a-z0-9]+","", build_number, flags=re.IGNORECASE)
+            build_number = re.sub(
+                "[^a-z0-9]+", "", build_number, flags=re.IGNORECASE)
             return '.' + build_number
 
     return ''
@@ -32,9 +33,10 @@ def get_version(package_name):
         for line in f:
             match = version_re.match(line[:-1])
             if match:
-                return match.groups()[0]+build_number
+                return match.groups()[0] + build_number
 
     return '0.1.0' + build_number
+
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -46,7 +48,7 @@ with open('HISTORY.rst') as history_file:
 requirements = [
     'six>=1.10.0',
     'inflect==0.2.5',
-    'graphene>=2.0.dev',
+    'graphene>=2.0',
     'iso8601'
 ]
 
