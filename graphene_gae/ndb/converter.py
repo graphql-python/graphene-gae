@@ -6,7 +6,7 @@ from google.appengine.ext import ndb
 
 from graphene import String, Boolean, Int, Float, List, NonNull, Field, Dynamic
 from graphene.types.json import JSONString
-from graphene.types.datetime import DateTime
+from graphene.types.datetime import DateTime, Time
 
 from .fields import DynamicNdbKeyStringField, DynamicNdbKeyReferenceField
 
@@ -54,6 +54,10 @@ def convert_ndb_float_property(ndb_prop, registry=None):
 
 def convert_ndb_json_property(ndb_prop, registry=None):
     return Field(JSONString, description=ndb_prop._name)
+
+
+def convert_ndb_time_property(ndb_prop, registry=None):
+    return Field(Time, description=ndb_prop._name)
 
 
 def convert_ndb_datetime_property(ndb_prop, registry=None):
@@ -134,6 +138,7 @@ converters = {
     ndb.FloatProperty: convert_ndb_float_property,
     ndb.JsonProperty: convert_ndb_json_property,
     ndb.DateProperty: convert_ndb_datetime_property,
+    ndb.TimeProperty: convert_ndb_time_property,
     ndb.DateTimeProperty: convert_ndb_datetime_property,
     ndb.KeyProperty: convert_ndb_key_propety,
     ndb.StructuredProperty: convert_local_structured_property,
