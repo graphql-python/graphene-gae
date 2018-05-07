@@ -8,7 +8,7 @@ from google.appengine.ext import ndb
 import graphene
 from graphene import List, NonNull, String
 from graphene.types.json import JSONString
-from graphene.types.datetime import DateTime
+from graphene.types.datetime import DateTime, Time
 
 from graphene_gae.ndb.fields import NdbKeyStringField, NdbKeyReferenceField, DynamicNdbKeyStringField, DynamicNdbKeyReferenceField
 from graphene_gae.ndb.converter import convert_ndb_property
@@ -84,6 +84,9 @@ class TestNDBConverter(BaseTest):
 
     def testDateTimeProperty_shouldConvertToString(self):
         self.__assert_conversion(ndb.DateTimeProperty, DateTime)
+
+    def testTimeProperty_shouldConvertToString(self):
+        self.__assert_conversion(ndb.TimeProperty, Time)
 
     def testJsonProperty_shouldConvertToString(self):
         self.__assert_conversion(ndb.JsonProperty, JSONString)
