@@ -71,7 +71,10 @@ class GraphQLHandler(webapp2.RequestHandler):
             if isinstance(request_data, six.string_types):
                 request_data = dict(query=request_data)
         except:
-            request_data = {}
+            try:
+                request_data = json.loads(self.request.body)
+            except ValueError:
+                request_data = {}
 
         request_data.update(dict(self.request.GET))
 
