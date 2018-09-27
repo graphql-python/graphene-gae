@@ -41,7 +41,6 @@ class MutationRootType(graphene.ObjectType):
 
 
 schema = graphene.Schema(query=QueryRootType, mutation=MutationRootType)
-print schema
 
 graphql_application.config['graphql_schema'] = schema
 graphql_application.config['graphql_pretty'] = True
