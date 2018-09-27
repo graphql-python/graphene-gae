@@ -41,6 +41,7 @@ class MutationRootType(graphene.ObjectType):
 
 
 schema = graphene.Schema(query=QueryRootType, mutation=MutationRootType)
+print schema
 
 graphql_application.config['graphql_schema'] = schema
 graphql_application.config['graphql_pretty'] = True
@@ -164,9 +165,9 @@ class TestGraphQLHandler(BaseTest):
             self.assertEqual(response.status_int, 400)
 
             expected = {
-                'errors': [{'locations': [{'column': 1, 'line': 1}],
-                            'message': 'Syntax Error GraphQL request (1:1) '
-                                       'Unexpected Name "syntaxerror"\n\n1: syntaxerror\n   ^\n'}]
+                u'errors': [{u'locations': [{u'column': 1, u'line': 1}],
+                            u'message': u'Syntax Error GraphQL (1:1) '
+                                        u'Unexpected Name "syntaxerror"\n\n1: syntaxerror\n   ^\n'}]
             }
             response_dict = json.loads(response.body)
             self.assertEqual(response_dict, expected)
