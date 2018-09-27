@@ -113,7 +113,10 @@ class NdbObjectType(ObjectType):
 
         # Returns True if `root` is a PolyModel subclass and `cls` is in the
         # class hierarchy of `root` which is retrieved with `_class_key`
-        if hasattr(root, '_class_key') and cls._meta.model._get_kind() in root._class_key():
+        if (hasattr(root, '_class_key') and
+            hasattr(cls._meta.model, '_class_key') and
+            set(cls._meta.model._class_key()).issubset(
+                set(root._class_key()))):
             return True
 
         return type(root) == cls._meta.model
