@@ -78,7 +78,7 @@ To create a GraphQL schema for it you simply have to write the following:
         class Meta:
             model = Article
 
-    class Query(graphene.ObjectType):
+    class QueryRoot(graphene.ObjectType):
         articles = graphene.List(ArticleType)
 
         @graphene.resolve_only_args
