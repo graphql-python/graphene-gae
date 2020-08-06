@@ -1,5 +1,5 @@
 ===============================
-Graphene GAE
+Graphene GAE (deprecated!)
 ===============================
 
 .. image:: https://travis-ci.org/graphql-python/graphene-gae.svg?branch=master
@@ -10,8 +10,9 @@ Graphene GAE
 
 .. image:: https://img.shields.io/pypi/v/graphene-gae.svg
         :target: https://pypi.python.org/pypi/graphene-gae
+      
 
-
+**(This repository is deprecated due to lack of maintainers. If you're interested in taking over let us know via `this issue <https://github.com/graphql-python/graphene-gae/issues/49>`__**
 
 A Google AppEngine integration library for `Graphene <http://graphene-python.org>`__
 
