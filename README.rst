@@ -12,7 +12,7 @@ Graphene GAE (deprecated!)
         :target: https://pypi.python.org/pypi/graphene-gae
       
 
-**(This repository is deprecated due to lack of maintainers. If you're interested in taking over let us know via `this issue <https://github.com/graphql-python/graphene-gae/issues/49>`__**
+**(This repository is deprecated due to lack of maintainers. If you're interested in taking over let us know via `this issue <https://github.com/graphql-python/graphene-gae/issues/49>`_.**
 
 A Google AppEngine integration library for `Graphene <http://graphene-python.org>`__
 
