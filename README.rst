@@ -17,7 +17,7 @@ Graphene GAE (deprecated!)
 A Google AppEngine integration library for `Graphene <http://graphene-python.org>`__
 
 * Free software: BSD license
-* Documentation: https://graphene_gae.readthedocs.org.
+* Documentation: https://graphene_gae.readthedocs.org. (Not live yet)
 
 Upgrade Notes
 -------------
