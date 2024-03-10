@@ -7,5 +7,5 @@ coverage
 flake8
 Sphinx==1.5.2
 
-PyYAML==3.11
+PyYAML==5.4
 graphene>=2.0.dev
